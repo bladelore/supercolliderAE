@@ -1,5 +1,6 @@
 Conductor {
     var <advance, <type, <name, <index;
+    var modalityDevice, deviceKey, modalityButton;
     var midiDefKey;
     
     *new { |name|
@@ -29,36 +30,45 @@ Conductor {
         advance.test = false;
     }
     
-    modalityFunc { |modalityDevice, deviceKey, button|
-        type = "modality";
-        modalityDevice.elAt(deviceKey, [button]).do { |sl|
-            sl.action = { |el|
-                if (el.value == 1) { this.nextFunc; };
-            };
+    clearListeners {
+        if (type == "modality" and: { modalityDevice.notNil }) {
+            modalityDevice.elAt(deviceKey, modalityButton).action = nil;
+        };
+        if (midiDefKey.notNil) {
+            MIDIdef(midiDefKey).free;
+            midiDefKey = nil;
         };
     }
     
-    midiNoteFunc { |key, midiNote|
+    modalityListener { |argModalityDevice, argDeviceKey, button|
+        this.clearListeners;
+        type = "modality";
+        modalityDevice = argModalityDevice;
+        deviceKey = argDeviceKey;
+        modalityButton = button;
+        modalityDevice.elAt(deviceKey, button).action = { |el|
+            if (el.value == 1) { this.nextFunc; };
+        };
+    }
+        
+    midiNoteListener { |midiNote|
+        this.clearListeners;
         type = "midiNote";
-        midiDefKey = key;
-        MIDIdef.noteOn(key, { |vel, num|
+        midiDefKey = (name ++ "_midiNote_" ++ midiNote).asSymbol;
+        
+        MIDIdef.noteOn(midiDefKey, { |vel, num|
             if (num == midiNote) { this.nextFunc; };
         });
     }
     
-    midiCCFunc { |key, midiCC|
+    midiCCListener { |midiCC|
+        this.clearListeners;
         type = "midiCC";
-        midiDefKey = key;
-        MIDIdef.cc(key, { |val|
+        midiDefKey = (name ++ "_midiCC_" ++ midiCC).asSymbol;
+        
+        MIDIdef.cc(midiDefKey, { |val|
             if (val == 127) { this.nextFunc; };
         }, midiCC);
-    }
-    
-    getData {
-        "advance: %".format(advance).postln;
-        "state: %".format(advance.test).postln;
-        "name: %".format(name).postln;
-        "type: %".format(type).postln;
     }
     
     wait {
@@ -67,5 +77,16 @@ Conductor {
     
     name_ { |argName|
         name = argName;
+    }
+    
+    free {
+        this.clearListeners;
+    }
+
+    getData {
+        "advance: %".format(advance).postln;
+        "state: %".format(advance.test).postln;
+        "name: %".format(name).postln;
+        "type: %".format(type).postln;
     }
 }

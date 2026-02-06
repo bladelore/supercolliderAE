@@ -112,16 +112,22 @@ Conductor
 )
 
 (
+
     a = Conductor.new("Witch");
     MIDIIn.connectAll;
-    a.midiCCFunc(\test1, 0);
+    a.midiCCFunc(0);
+    a.modalityFunc(k, \tr, \fwd);
 
     x = {
-        a.label("Custom");
+        a.label;
         "yep".postln;
         a.wait;
 
         a.label;
+        "nope".postln;
+        a.wait;
+
+        a.label("Custom label");
         "nope".postln;
         a.wait;
     }.fork(t);
@@ -133,4 +139,9 @@ k.gui
 
 modality
 
-MIDIdef
+MIDIdef.all
+
+MIDIdef.freeAll;
+
+k.elAt(\sl, 0).action = { arg el; el.value.postln; }
+k.elAt(\sl, 0).action = Nil
