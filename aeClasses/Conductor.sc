@@ -1,19 +1,18 @@
 Conductor {
     var <advance, <name, <clock, <quant, loopIndex, charIndex;
-    var listenerType, modalityDevice, deviceKey, modalityButton, midiDefKey, currentLabel, targetSection, skipSectionBool;
-    
-    *new { |argName, argClock|
-        var newAdvance = Condition.new;
-        newAdvance.test = false;
+    var currentLabel, targetSection, skipSectionBool, cleanupFunc;
+
+    *new { |name, clock|
+        var advance = Condition.new;
+        advance.test = false;
         
-        ^super.newCopyArgs(
-            newAdvance,                      // advance
-            argName ?? "Conductor",          // name
-            argClock ?? TempoClock.default,  // clock
-            0,                               // quant
-            0,                               // loopIndex
-            0,                               // charIndex
-        );
+        ^super.newCopyArgs(advance, name ?? "Conductor", clock ?? TempoClock.default).init;
+    }
+
+    init {
+         loopIndex = 0;
+         charIndex = 0;
+         quant = 0;
     }
 
     label { |section|
@@ -77,43 +76,41 @@ Conductor {
     }
 
     //Listeners
+    listen { |config|
+        this.clearListeners;
+        
+        switch(config[\type],
+            \midiNote, {
+                var key = ("midiNote_" ++ config[\note]).asSymbol;
+                MIDIdef.noteOn(key, { |vel, num|
+                    if (num == config[\note]) { this.nextFunc; };
+                }).permanent_(true);
+
+                cleanupFunc = { MIDIdef(key).free };
+            },
+            \midiCC, {
+                var key = ("midiCC_" ++ config[\cc]).asSymbol;
+                MIDIdef.cc(key, { |val|
+                    if (val == 127) { this.nextFunc; };
+                }, config[\cc]).permanent_(true);
+
+                cleanupFunc = { MIDIdef(key).free };
+            },
+            \modality, {
+                config[\device].elAt(config[\key], config[\button]).action = { |el|
+                    if (el.value == 1) { this.nextFunc; };
+                };
+
+                cleanupFunc = {
+                    config[\device].elAt(config[\key], config[\button]).action = nil;
+                };
+            }
+        );
+    }
+
     clearListeners {
-        if (listenerType == "modality" && modalityDevice.notNil) {
-            modalityDevice.elAt(deviceKey, modalityButton).action = nil;
-        };
-        if ((listenerType == "midiNote" || listenerType == "midiCC") && midiDefKey.notNil) {
-            MIDIdef(midiDefKey).free;
-            midiDefKey = nil;
-        };
-    }
-    
-    modalityListener { |argModalityDevice, argDeviceKey, button|
-        this.clearListeners;
-        listenerType = "modality";
-        modalityDevice = argModalityDevice;
-        deviceKey = argDeviceKey;
-        modalityButton = button;
-        modalityDevice.elAt(deviceKey, button).action = { |el|
-            if (el.value == 1) { this.nextFunc; };
-        };
-    }
-    
-    midiNoteListener { |midiNote|
-        this.clearListeners;
-        listenerType = "midiNote";
-        midiDefKey = ("midiNote_" ++ midiNote).asSymbol;
-        MIDIdef.noteOn(midiDefKey, { |vel, num|
-            if (num == midiNote) { this.nextFunc; };
-        }).permanent_(true);
-    }
-    
-    midiCCListener { |midiCC|
-        this.clearListeners;
-        listenerType = "midiCC";
-        midiDefKey = ("midiCC_" ++ midiCC).asSymbol;
-        MIDIdef.cc(midiDefKey, { |val|
-            if (val == 127) { this.nextFunc; };
-        }, midiCC).permanent_(true);
+        cleanupFunc !? { cleanupFunc.value };
+        cleanupFunc = nil;
     }
     
     //setters

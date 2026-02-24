@@ -2,7 +2,11 @@
     t.tempo = 120/60;
     a = Conductor.new("Witch", t);
     a.skipTo("custom");
-    a.modalityListener(k, \tr, \fwd);
+
+    // Usage:
+    a.listen((type: \midiNote, note: 60));
+    a.listen((type: \midiCC, cc: 64));
+    a.listen((type: \modality, device: k, key: \tr, button: \fwd));
 
     a.debug;
 
@@ -10,7 +14,7 @@
         a.label;
         
             Pdef(\test, Pbind(\dur, 1)).play(t);
-            
+
         a.wait;
 
         a.label;
@@ -41,6 +45,10 @@
 
     }.fork
 )
+
+a.debug
+
+k.gui
 
 (
     a = Conductor.new("names");
