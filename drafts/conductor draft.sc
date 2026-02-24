@@ -113,10 +113,16 @@ Conductor
 
 (
 
-    a = Conductor.new("Witch");
-    MIDIIn.connectAll;
-    a.midiCCFunc(0);
+    // a = Conductor.new("Witch");
+    Conductor(\witch);
+    // MIDIIn.connectAll;
+    Conductor(\witch).midiCCListener(1);
+    a.midiCCListener(1);
+    MIDIdef.all.postln;
+    a.clearListeners();
     a.modalityFunc(k, \tr, \fwd);
+
+    a.getData;
 
     x = {
         a.label;
@@ -132,7 +138,7 @@ Conductor
         a.wait;
     }.fork(t);
 
-    a.getData
+    a.getData 
 )
 
 k.gui
@@ -143,5 +149,14 @@ MIDIdef.all
 
 MIDIdef.freeAll;
 
+MIDIdef.cc(\test, 0).permanent_(true);
+
+MIDIdef(\test).free
+
 k.elAt(\sl, 0).action = { arg el; el.value.postln; }
 k.elAt(\sl, 0).action = Nil
+
+
+Pdef
+
+Tdef
