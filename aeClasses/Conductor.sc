@@ -1,6 +1,6 @@
 Conductor {
     var <advance, <name, <clock, <quant, loopIndex, charIndex;
-    var currentLabel, targetSection, skipSectionBool, cleanupFunc;
+    var currentLabel, skipSectionBool, targetSection, cleanupFunc;
 
     *new { |name, clock|
         var advance = Condition.new;
@@ -10,9 +10,10 @@ Conductor {
     }
 
     init {
-         loopIndex = 0;
-         charIndex = 0;
-         quant = 0;
+        loopIndex = 0;
+        charIndex = 0;
+        quant = 0;
+        skipSectionBool = false;
     }
 
     label { |section|
@@ -54,9 +55,15 @@ Conductor {
         };
     }
 
-    skipTo { |sectionName|
-        targetSection = sectionName.asSymbol;
-        skipSectionBool = true;
+    targetSection_ { |sectionName|
+        if (sectionName.isNil) {
+            targetSection = nil;
+            skipSectionBool = false;
+        } {
+            targetSection = sectionName.asSymbol;
+            skipSectionBool = true;
+            ("Skipping to: " ++ sectionName).postln;
+        };
     }
 
     rampTempo { |targetTempo, dur = 4, curve = \lin, step = 0.01|
@@ -77,14 +84,18 @@ Conductor {
 
     //Listeners
     listen { |config|
-        this.clearListeners;
+        var channel;
         
+        channel = config[\chan] ?? 0;
+
+        this.clearListeners;
+
         switch(config[\type],
             \midiNote, {
                 var key = ("midiNote_" ++ config[\note]).asSymbol;
                 MIDIdef.noteOn(key, { |vel, num|
                     if (num == config[\note]) { this.nextFunc; };
-                }).permanent_(true);
+                }, chan: channel).permanent_(true);
 
                 cleanupFunc = { MIDIdef(key).free };
             },
@@ -92,7 +103,7 @@ Conductor {
                 var key = ("midiCC_" ++ config[\cc]).asSymbol;
                 MIDIdef.cc(key, { |val|
                     if (val == 127) { this.nextFunc; };
-                }, config[\cc]).permanent_(true);
+                }, config[\cc], chan: channel).permanent_(true);
 
                 cleanupFunc = { MIDIdef(key).free };
             },
@@ -125,7 +136,7 @@ Conductor {
         
         postf("\n=== % ===\n", header);
         this.slotsDo { |name, val, idx|
-            postf("  % [%]: %\n", name, idx, val);
+            postf("  %: %: %\n", idx, name, val);
         };
     }
 }
