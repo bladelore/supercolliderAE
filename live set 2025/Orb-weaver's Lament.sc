@@ -57,6 +57,7 @@ x = {
             \windowWidth, 0.9,
             \polarityMod, 1,
             \overlap, 10,
+            \drywet, 1,
 
             \companderMD, ~knob.(6).linexp(0,1,0.01,20),
 

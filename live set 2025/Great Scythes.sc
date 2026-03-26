@@ -5,21 +5,7 @@
     ~analyzeSlices.("/Users/aelazary/Desktop/Samples etc./Missing Sounds 2016/01-Andatra_Break_127_PL_1.WAV", ~break, 0.1, \centroid, chans: 2);
     ~analyzeSlices.("/Users/aelazary/Desktop/Samples etc./Film Sounds/ice-dispenser-crushed-ice.wav", ~ice, 0.1, \centroid, chans: 2);
     ~analyzeSlices.("/Users/aelazary/Desktop/Samples etc./scythes/Sharpen the scythe.wav", ~scythe, 0.1, \centroid, chans: 2);
-)
 
-(
-    ~busOut = {|busArr|
-        var busChans = busArr;
-        busChans = busArr.collect({|bus, i| (bus.index + (0..bus.numChannels-1))});
-        busChans.flatten;
-    };
-
-    Ndef(\xyz,{
-        SinOsc.ar([440, 444]) * 0.1;
-    }).play(~busOut.([~bus1, ~bus4]));
-)
-
-(
    SynthDef(\scythe,{|gate=1|
         var sig;
         var combEnv = \combEnv.kr(2);
@@ -51,7 +37,7 @@
         
         sig = RLPF.ar(sig, filterEnv, 1);
         
-        // sig = sig + (BPF.ar(sig, (0..20).normalize.linexp(0, 1, 50, 20000), 0.01).sum * 0.dbamp);
+        sig = sig + (BPF.ar(sig, (0..20).normalize.linexp(0, 1, 50, 20000), 0.01).sum * 0.dbamp);
         
         sig = sig + PinkNoise.ar(noiseEnv);
         sig = VASEM12.ar(sig, XLine.ar(5000, 50, pitchEnv), res: 1, transition: SinOsc.ar(0.1 * (1..5)));
@@ -70,8 +56,6 @@
         sig = sig * EnvGen.ar(Env.perc(\atk.kr(0.1), \rel.kr(1), level: 1, curve: -2), gate, doneAction: 2);
 
         sig = Splay.ar(sig, 1);
-
-        
 
         sig = Rotate2.ar(sig[0], sig[1], LFSaw.ar(\rotate.kr(0.01)));
 
@@ -117,8 +101,8 @@
         sig = sig + (BPF.ar(sig, (0..20).normalize.linexp(0, 1, 50, 20000), 0.01).sum * 0.dbamp);
         
         sig = sig + PinkNoise.ar(noiseEnv);
-        sig = VASEM12.ar(sig, XLine.ar(5000, 50, pitchEnv), res: 1, transition: SinOsc.ar(0.1 * (1..5)));
-        sig = VASEM12.ar(sig, XLine.ar(50, 5000, pitchEnv), res: 1, transition: Line.ar(1, 0, pitchEnv));
+        sig = VASEM12.ar(sig, XLine.ar(15000, 50, pitchEnv), res: 1, transition: SinOsc.ar(0.1 * (1..5)));
+        sig = VASEM12.ar(sig, XLine.ar(50, 15000, pitchEnv), res: 1, transition: Line.ar(1, 0, pitchEnv));
         
         sig = sig + (PitchShift.ar(sig, pitchRatio: [1, 1.5, 2] * shifterRatio, windowSize: \shifterWindow.kr(0.2), timeDispersion: 0.001, pitchDispersion: 0.05).sum * \shifterMix.kr(1));
         
@@ -215,8 +199,6 @@
             )
         );
 
-
-
         //ever since I saw the sun
         //i reached for the dirt above
         //beneath the farmland and crops 
@@ -290,7 +272,7 @@
             )
         );
 
-        // \a.postln;
+        \a.postln;
 
             b = Buffer.read(s, "/Users/aelazary/Projects/great scythes poem Project/great scythes words.wav");
             c = Buffer.read(s, "/Users/aelazary/Desktop/Samples etc./Film Sounds/ice-dispenser-crushed-ice.wav");
@@ -372,13 +354,12 @@
                     // \ratios, [[1.0, 1.5, 1.75, 2.25, 5]] * 0.5,
                     
                     // \filterEnv, ~slider.(4) * Pxrand([0.1, 2, 0.5, 1.5, 0.7], inf),
-                    \lpf, ~slider.(3).linexp(0,1,50,12000),
-                    \filterEnv, ~slider.(4) * 5,
-                    \combEnv, ~slider.(5).linexp(0, 1, 0.001, 2),
-                    \pitchEnv, ~slider.(6).linexp(0, 1, 0.01, 4),
+                    \lpf, ~slider.(3).linexp(0,1,50,20000),
+                    \filterEnv, ~slider.(4) * 2,
+                    \pitchEnv, ~slider.(5).linexp(0, 1, 0.001, 0.2),
+                    \combEnv, ~slider.(6).linexp(0, 1, 0.001, 2),
                     // \pitchMod, 20,
                     \pitchNoise, ~slider.(7).linexp(0,1,0.01,1) - 0.01,
-                    
                     \shifterMix, ~knob.(0),
                     \shifterWindow, ~knob.(1),
                     \noiseEnv, ~knob.(2),
@@ -477,10 +458,11 @@
                     \shifterRatio, 1,
 
                     // \ratios, [[1, 1, 1, 1, 1]] * 0.5,
-                    // \ratios, [[1.005, 1.001, 1.01, 1.001, 1.02]] * 0.5,
-                    \ratios, [[2, 3, 7, 5, 1.5]] * 0.5,
+                    \ratios, [[1.005, 1.001, 1.01, 1.001, 1.02]] * 0.5,
+                    // \ratios, [[5,7,11,13,17]] * 0.25,
+                    // \ratios, [[2, 3, 7, 5, 1.5]] * 0.25,
 
-                    // \ratios, [[1.0, 1.5, 1.75, 2.25, 5]] * 0.5,
+                    // \ratios, [[1.0, 1.5, 1.75, 2.25, 5]] * 0.66,
                     
                     \filterEnv, ~slider.(4) * 5,
                     \combEnv, ~slider.(5).linexp(0, 1, 0.001, 2),

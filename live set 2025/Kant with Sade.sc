@@ -29,7 +29,7 @@
         Ndef(\morph)[999] = \pset -> Pbind(
             \amp, 1,
             \dur, 0.01,
-            \gain, -10,
+            \gain, -15,
             \atk, 10,
             \rel, 100,
             \swap, ~knob.(7),
@@ -96,7 +96,7 @@
             );
 
             sig = sig * \amp.kr(1).lag;
-        });
+        }); 
 
         Ndef(\ipf)[999] = \pset -> Pbind(
             \dur, 0.01,

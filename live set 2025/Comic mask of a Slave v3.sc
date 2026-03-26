@@ -6,18 +6,16 @@
 (
     ~maxGrains = 25;
     ~fftSize = 4096*32;
-    ~bufA = Buffer.alloc(s, ~fftSize);
-    ~bufB = Buffer.alloc(s, s.sampleRate * 0.01);
-    ~bufC = Buffer.alloc(s, s.sampleRate * 0.025);
-    ~specBuf = Array.fill(~maxGrains, {Buffer.alloc(s, ~fftSize)});
+    ~bufA = nil ?? {Buffer.alloc(s, ~fftSize)};
+    ~bufB = nil ?? {Buffer.alloc(s, s.sampleRate * 0.01)};
+    ~bufC = nil ?? {Buffer.alloc(s, s.sampleRate * 0.025)};
+    ~specBuf = nil ?? {Array.fill(~maxGrains, {Buffer.alloc(s, ~fftSize)})};
     ~specBuf.do{|item| item.zero};
     ~roar_A=Bus.audio(s,2);
     ~roar_B=Bus.audio(s,2);
 )
 
-Pdef(\cut1).clear
-
--18.dbamp
+k.gui
 
 (
 
@@ -451,12 +449,42 @@ Pdef(\cut1).clear
 
         ~advance.wait;
 
+            \h.postln;
+
+            Pdef(\cut1,
+                Pbind(
+                    \instrument, \segPlayer,
+                    // \amp, Pkey(\groupdelta),
+                    \amp, 1,
+                    \atk, 0.01,
+                    \rel, Pkey(\dur) * 0.5,
+                    // \rel, Pkey(\dur) * Pseq([0.5, 0.5, 2, 0.5], inf),
+                    \buf, sample.at(\file),
+                    // \rate, Pseq([1, 1, 2, 1], inf),
+                    \rate, 1,
+                    \oneshot, 1,
+                    \gain, -6,
+                    \sliceStart, Pstep(Pseq([0, 5, 0, 10], inf), 4, inf),
+                    \stutterPat, 1,
+                    // \stutterRange, Pstep(Pseq([5], inf), 16, inf),
+                    \slice, ~pGetSlice.((Pseries(0, 1, inf).wrap(0, 5) + Pkey(\sliceStart)), sample).stutter(Pkey(\stutterPat)),
+                    \pitchMix, 0.8,
+                    // \pitchRatio, 1,
+                    \windowSize, ~pmodenv.(Pseq([0.01, 0.04], inf), 2),
+                    \pitchDispersion, 0.01,
+                    \timeDispersion, 0.5,
+                    \out, [~bus2, ~mutant, ~resonator]
+                )
+            );
+
             Pdef(\perc,
                 Pdef(\cut1) <>
                 Pdef(\p1)
             ).play(t);
 
         ~advance.wait;
+
+            \i.postln;
 
             Pdef(\cut1,
                 Pbind(
@@ -486,12 +514,16 @@ Pdef(\cut1).clear
 
         ~advance.wait;
 
+            \j.postln;
+
             Pdef(\perc).stop;
             Pdef(\fmString).stop;
             // Ndef(\sample).play(~bus1);
             // Ndef(\sample2).play(~bus1);
 
         ~advance.wait;
+
+            \k.postln;
 
             Ndef(\roar_A, \roar)
             .set(
@@ -558,6 +590,8 @@ Pdef(\cut1).clear
         ~advance.wait;
 
         \end.postln; 
+
+            Ndef(\specGrains).stop;
             
             Ndef(\sample).stop(fadeTime: 10);
             Pdef(\perc).stop;

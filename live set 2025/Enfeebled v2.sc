@@ -9,13 +9,27 @@
     // ~analyzeSlices.("/Users/aelazary/Desktop/Samples etc./Missing Sounds 2016/PHA_140_C_Synthloop_08.wav", ~break2, 0.1, \centroid, chans: 0);
     // ~analyzeSlices.("/Users/aelazary/Desktop/Samples etc./Prism samples/Audio 0003 [2024-12-19 184904].aif", ~break2, 0.3, \centroid, chans: 2);
     ~makeSpec.("/Users/aelazary/Desktop/Samples etc./Silent Hill/Ambience/Silent Hill 4/Fortunate Sleep - Cat Scratchism Mix/FEEDIES 1.wav", ~specBuff, 16384, 2);
-    ~roar_A=Bus.audio(s,2);
-    ~roar_B=Bus.audio(s,2);
+    ~roar_A= nil ?? {Bus.audio(s,2)};
+    ~roar_B = nil ?? {Bus.audio(s,2)};
+)
+
+~roar_A
+
+(
+    ~maxGrains = 25;
+    ~fftSize = 4096*32;
+    ~bufA = nil ?? {Buffer.alloc(s, ~fftSize)};
+    ~bufB = nil ?? {Buffer.alloc(s, s.sampleRate * 0.01)};
+    ~bufC = nil ?? {Buffer.alloc(s, s.sampleRate * 0.025)};
+    ~specBuf = nil ?? {Array.fill(~maxGrains, {Buffer.alloc(s, ~fftSize)})};
+    ~specBuf.do{|item| item.zero};
 )
 
 (
     var sample = ~break;
     var sample2 = ~break2;
+
+    ~bufA.zero;
 
     t = TempoClock.new(137/60).permanent_(true).schedAbs(0, {t.beatsPerBar_(4)});
 
@@ -124,11 +138,11 @@
                     \fb, ~knob.(5).linlin(0,1,0,-1),
                     \filter, ~knob.(3).linexp(0,1,50,5000),
                     \fuzz, ~knob.(4).linexp(0,1,0.01, 1) - 0.01,
-                    \subharmonic, 3,
+                    \subharmonic, 2,
                     // \exciterFilter, 3000,
                     \exciterAttack, 3000,
                     \exciterRelease, Pseq([1000, 3000, 3000], inf),
-                    \gain, 0,
+                    \gain, -6,
                     \out, [~roar_B, ~miVerb], 
                 )     
             );
@@ -154,7 +168,48 @@
             });
 
             Ndef(\sample).fadeTime = 10;
-            Ndef(\sample).set(\buf, b, \pos, 0, \rate, 1, \loop, 1, \gain, 0).play(~bus3);
+            Ndef(\sample).set(\buf, b, \pos, 0, \rate, 1, \loop, 1, \gain, 0).play(~spectralGrains);
+
+            Ndef(\specGrains, \spectralGrains1)
+            .set(\inbus, ~spectralGrains, \srcbuf, ~bufA, \specbuf, `[~specBuf], \fftSize, ~fftSize);
+
+            Ndef(\specGrains).set(
+                \amp, 1,
+                \dur, 0.01,
+                \posRate, 0.1,
+                
+                \tFreq, 5,
+                \tFreqMR, 0,
+                \tFreqMD, 0,
+
+                \spectralFilter, 0,
+
+                \num_teeth, 16,
+                \comb_phase, 0,
+                \comb_phase_mod, 0.1,
+                \comb_width, 0.5,
+                
+                \windowWidth, 0.9,
+                \polarityMod, 1,
+                \overlap, 5,
+
+                \companderMD, 6,
+
+                \overdub, 0,
+                \midipitch, -12,
+                // \feedback, 1,
+
+                \gain, 26,
+            );
+
+            Ndef(\specGrains)[999] = \pset -> Pbind(
+                \dur, 0.01, 
+                \drywet, 1,
+                \spectralFilter, ~knob.(6).linlin(0, 1, 0.1, 0), 
+                \comb_width, ~knob.(7).linlin(0, 1, 0.1, 0.9) 
+            );
+
+            Ndef(\specGrains).play(~bus3);
 
         ~advance.wait;
             
@@ -174,10 +229,11 @@
                     // \exciterFilter, 3000,
                     \exciterAttack, 3000,
                     \exciterRelease, Pseq([1000, 3000, 3000], inf),
-                    \gain, 0,
+                    \gain, -6,
                     \out, [~roar_B, ~miVerb], 
                 ) 
                 <> ~filterBeat.(key: Pkey(\cyclecount), beat:[2], mod: 3, reject: 1)
+                <> ~filterBeat.(key: Pkey(\groupcount), beat:[1, 3], mod: 3, reject: 0)
                 <> Pdef(\p1)
             ).play(t);
 
@@ -295,7 +351,7 @@
                 Pmono(\fftStretch_magAbove_mono,
                     \dur, 0.01,
                     \amp, 0.5,
-                    \gain, 6,
+                    \gain, 0,
                     \buf, ~specBuff.at(\file),
                     \analysis, [~specBuff.at(\analysis)],
                     \fftSize, ~specBuff.at(\fftSize),
@@ -306,11 +362,11 @@
                     // \pos, 0.01,
                     // \pos, 0.55,
                     // \pos, 0.7,
-                    \filter, ~knob.(6),
-                    \pos, ~knob.(7).linlin(0,1,0,0.25),
+                    \filter, ~slider.(6),
+                    \pos, ~slider.(7).linlin(0,1,0,0.25),
                     \len, 0.2,
                     \pan, ~pmodenv.(Pwhite(-0.6, 0.6), 3, 1, \sin),
-                    \out, [~bus3, ~miVerb]
+                    \out, [~miVerb]
                 )
             ).play(t);
 
@@ -464,7 +520,7 @@
                     \exciterAttack, 3000,
                     \exciterRelease, 1000,
                     \exciterRelease, Pseq([1000, 3000, 3000, 6000] * 2, inf),
-                    \gain, 0,
+                    \gain, -12,
                     \out, [~roar_B, ~miVerb], 
                 ) 
                 <> ~filterBeat.(key: Pkey(\cyclecount), beat:[2], mod: 3, reject: 1)
@@ -487,6 +543,25 @@
         ~advance.wait;
 
             \j.postln;
+
+            Pdef(\fmStringParams,
+                Pbind(
+                    \instrument, \fmString,
+                    \midiPitch, 42.midicps(),
+                    \pitchLag, 3,
+                    \atk, ~knob.(2),
+                    \rel, 1,
+                    \fb, ~knob.(5).linlin(0,1,0,-1),
+                    \filter, ~knob.(3).linexp(0,1,50,5000),
+                    \fuzz, ~knob.(4).linexp(0,1,0.01, 1) - 0.01,
+                    \subharmonic, 1,
+                    // \exciterFilter, 3000,
+                    \exciterAttack, 3000,
+                    \exciterRelease, Pseq([1000, 3000, 3000], inf),
+                    \gain, -3,
+                    \out, [~roar_B, ~miVerb], 
+                )     
+            );
 
             Pdef(\kickParams,
                 Pbind(
@@ -665,7 +740,7 @@
                     \midiPitch, Pseq([91, 86, 81, 82, 79, 42].midicps, inf),
                     \pitchLag, 3,
                     \atk, 0,
-                    \rel, 2,
+                    \rel, 1,
                     \fb, -1,
                     \filter, 5000,
                     \fuzz, 0,
