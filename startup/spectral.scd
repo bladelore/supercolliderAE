@@ -1,4 +1,15 @@
 (
+~makeSpec = {|file, dict, fftSize, overlaps=2|
+	// var fftQuant = 2**round(log2(fftSize));
+	~clearAnalysisDict.(dict);
+	dict.put(\filepath, file);
+	dict.put(\file, Buffer.readChannel(s, file, channels: [0]));
+	dict.put(\fftSize, fftSize);
+	dict.put(\overlaps, overlaps);
+	dict.put(\analysis, Array.fill(overlaps, {Buffer.alloc(s, fftSize)}));
+};
+
+
 SynthDef(\morphFollow, {
 	var fftsize = 2048;
 	var in1, in2, envfollow, sig;
@@ -149,16 +160,6 @@ SynthDef(\cepstralMorph_fx, {|buf1, buf2|
 	Out.ar(\out.kr(0), sig);
 }).add;
 
-~makeSpec = {|file, dict, fftSize, overlaps=2|
-	// var fftQuant = 2**round(log2(fftSize));
-	~clearAnalysisDict.(dict);
-	dict.put(\filepath, file);
-	dict.put(\file, Buffer.readChannel(s, file, channels: [0]));
-	dict.put(\fftSize, fftSize);
-	dict.put(\overlaps, overlaps);
-	dict.put(\analysis, Array.fill(overlaps, {Buffer.alloc(s, fftSize)}));
-};
-
 SynthDef(\fftStretch_mono, {|buf, analysis=#[0,1], fftSize|
 	var sig;
 	var chain;
@@ -196,8 +197,7 @@ SynthDef(\fftStretch_magFilter_mono, {|buf, analysis=#[0,1], fftSize|
 	var startsamp, endsamp;
 	var bufFrames = BufFrames.kr(buf);
 
-
-	chain = BufFFTTrigger(analysis, 0.5,[0,1], 2);
+	chain = BufFFTTrigger(analysis, 0.5,[0, 1], 2);
 
 	startsamp = (\pos.kr(0) * bufFrames);
 	endsamp = startsamp + (\len.kr(1) * bufFrames);

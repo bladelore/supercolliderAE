@@ -378,9 +378,8 @@ SynthDef(\warpSlicer, { |buf, gate=1, slice=#[0, 1], oneshot=1|
     sig = sig * env;
     sig = sig * \gain.kr(0).dbamp;
     sig = sig * \amp.kr(0);
+	sig = sig.sanitize();
 
     Out.ar(\out.kr(0), sig);
 }).add;
-
-
 )

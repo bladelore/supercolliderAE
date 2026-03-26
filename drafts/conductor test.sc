@@ -1,11 +1,15 @@
 (
     t.tempo = 120/60;
     a = Conductor.new(name: "Witch", clock: t);
-    a.targetSection_("test");
+    a.quant_(4);
+
+    //skips to target section
+    a.targetSection_(nil);
+
     // MIDIIn.connectAll;
-    // Usage:
     // a.listen((type: \midiNote, note: 60));
     // a.listen((type: \midiCC, cc: 0));
+
     a.listen((type: \modality, device: k, key: \tr, button: \fwd));
     a.clearListeners;
 

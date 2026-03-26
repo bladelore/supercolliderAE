@@ -187,7 +187,6 @@ k.gui;
             clampTime: 0.002,
             relaxTime: 0.1,
         );
-
         sig = sig * \gain.kr(0).dbamp;
         sig = Pan2.ar(sig, \pan.kr(0));
         sig = LeakDC.ar(in: sig, coef: 0.995);
@@ -200,143 +199,33 @@ k.gui;
         PmonoArtic(
             \eightoheightsub,
             \amp, 1,
-            // \dur, 0.75, 
-            \dur, Pseq([0.5, 0.5, Rest(0.5)], inf),
-            \dur, Pseq([0.5, 0.75, 0.75] * 2, inf),
+            \dur, 0.125,
+            // \dur, Pseq([1.5, 1.5, 1.5, 1.5, 1, 1,], inf),
+            // \dur, Pseq([0.5, 0.75, 0.75] * 2, inf),
             //legato controls if notes are connected
-            \legato, Prand([0.5, 1], inf),
+            \legato, Pwrand([0.5, 1], [0.75, 0.25], inf),
             //use globalLag 
-            \globalLag, 1,
-            \freq, Pseq(([31, 30, 30, 30] - 8).midicps, inf),
+            \globalLag, 9,
+            \freq, Pseq(([25, 25, 25, 25] + 4).midicps, inf),
             \sweep, 1,
-            \drive, 0,
-            \driveMix, 1,
-            // \drive, Pseq([20, 10], inf),
-            // \atk, Pseq([0.2, 0.5], inf),
-            \atk, 0.3,
-            \dec, 1,
-            \sus, 1,
-            \rel, 0.4,
+            \drive, 10,
+            \driveMix, 0,
+            // \drive, Pseq([20, 10] * 0.1, inf),
+            // \atk, Pseq([1, 2], inf),
+            \atk, 1,
+            \dec, 0.1,
+            \sus, 0.5,
+            \rel, 0.2,
             \gain, 20,
-            \out, ~bus2
+            \out, ~bus1
         )
-    );
+    ).play(t);
 )
 
 (
     Pdef(\subParams).play(t);
     Pdef(\scytheParams).play(t)
 )
-
-// create a wavetable (or use your own)
-(
-)
-
-DualOscOS
-
-~buffer
-
-BufRd
-
-.collect
-
-(
-    var file;
-
-    //file = "/Users/aelazary/Desktop/Samples etc./tom erbe impulse responses/effectronImpResp.wav";
-    
-    // file = "/Users/aelazary/Desktop/Samples etc./tom erbe impulse responses/ep0ImpResp.wav");
-    // file = "/Users/aelazary/Desktop/Samples etc./tom erbe impulse responses/ep0ImpResp.wav";
-    // file = "/Users/aelazary/Desktop/Samples etc./matchstick burning/match impulse.wav";
-    // file = "/Users/aelazary/Desktop/Samples etc./analogprincess + [chw] - coldwinter kit/hardstyle/kix - 1.wav";
-    file = "/Users/aelazary/Desktop/Samples etc./analogprincess + [chw] - coldwinter kit/percs & fx/fx - warx.wav";
-    // file = "/Users/aelazary/Desktop/Samples etc./EchoThiefImpulseResponseLibrary/Underpasses/FremontTroll.wav";
-
-    {
-        var cyclePos, phase, sig, currentSample, fb, fbIdx, size, freq;
-
-        fb = 1;
-        size = 512;
-        ~buffer = 2.collect({|i| Buffer.readChannel(s, file, channels:[i], numFrames: -1);});
-        freq=4;
-        // cyclePos = SinOsc.ar(0.1, 2pi).linlin(-1, 1, 0, 1);
-        cyclePos = LFNoise2.ar(0.1).linlin(-1, 1, 0, 1);
-        // cyclePos = Phasor.ar(DC.ar(0), 4);
-        phase = Phasor.ar(DC.ar(0), freq * SampleDur.ir);
-
-        ~buffer.collect({|buf, i|
-            sig = SingleOscOS.ar(
-                bufnum: buf,
-                phase: phase,
-                numCycles: BufFrames.kr(buf) / size,
-                cyclePos: cyclePos,
-                oversample: 4,
-            );
-            
-            fbIdx = cyclePos * BufFrames.kr(buf);
-            currentSample = BufRd.ar(1, buf, fbIdx);
-            currentSample = ((sig * fb) + currentSample);
-                // .clip(0, 1);
-            currentSample = LPF.ar(currentSample, 15000);
-            if(fb > 0){ BufWr.ar(LeakDC.ar(currentSample), buf, fbIdx);};
-            sig = sig.tanh();
-            LeakDC.ar(sig) * \gain.kr(-6).dbamp;
-        });
-        
-    }.play;
-)
-
-Shaper
-
-(
-
-    var file = "/Users/aelazary/Desktop/Samples etc./tom erbe impulse responses/effectronImpResp.wav";
-    
-    // ~buffer = Buffer.read(s, "/Users/aelazary/Desktop/Samples etc./tom erbe impulse responses/ep0ImpResp.wav");
-    // ~buffer = Buffer.read(s, "/Users/aelazary/Desktop/Samples etc./matchstick burning/match impulse.wav");
-    ~buffer = 2.collect({|i| Buffer.readChannel(s, file, channels:[i]);});
-
-    t = Signal.sineFill(2048, [1], [0]);
-    u = Signal.sineFill(2048, 1.0/((1..512)**2)*([1,0,-1,0]!128).flatten);
-    w = Signal.sineFill(2048, 1.0/(1..512)*([1,0]!256).flatten);
-    x = Signal.sineFill(2048, 1.0/(1..512));
-    v = t.addAll(u).addAll(w).addAll(x);
-
-    ~buffer = Buffer.loadCollection(s, v);
-
-    {
-        var cyclePos, phase, sig, currentSample, fb, fbIdx, size, freq;
-
-        fb = 1;
-        size = 2048;
-        freq =  60 * SampleDur.ir;
-
-        // cyclePos = SinOsc.ar(0.1, 2pi).linlin(-1, 1, 0, 1);
-        cyclePos = LFNoise2.ar(1.5).linlin(-1, 1, 0, 1);
-        phase = Phasor.ar(DC.ar(0), freq);
-
-        sig = SingleOscOS.ar(
-            bufnum: ~buffer,
-            phase: phase,
-            numCycles: BufFrames.kr(~buffer) / size,
-            cyclePos: cyclePos,
-            oversample: 1,
-        );
-        
-        fbIdx = cyclePos * BufFrames.kr(~buffer);
-        currentSample = BufRd.ar(1, ~buffer, fbIdx);
-        currentSample = (sig * fb) + currentSample;
-	    BufWr.ar(currentSample, ~buffer, fbIdx);
-
-        sig = LeakDC.ar(sig) * 0.1;
-
-        sig ! 2;
-    }.play;
-)
-
-
-
-~buffer.numFrames
 
 (
     var path, soundFile, size, skipTime, freq;
@@ -369,3 +258,52 @@ var chirp = Signal.cosineChirp(size, freq0, freq1, beta: -1, sampleRate: sampleR
 // chirp.plot;
 // chirp.rfft(rcosTable).magnitude.ampdb.plot
 )
+
+(
+     ~topology=(
+                'low' : 0,
+                'band' : 1,
+                'high' : 2,
+                'notch' : 3,
+                'peak' : 4,
+                'all' : 5,
+                'ubp' : 6
+            );
+
+            Ndef(\mic, \input).set(\in, 0, \amp, 1, \gain, -12).play(~mutant);
+
+            Ndef(\mutantString).fadeTime = 10;
+            Ndef(\mutantString).play(~bus1);
+
+            Ndef(\mutantString).set(
+                \inbus, ~mutant,
+                \midiPitch, 80.midicps(),
+                \topology, ~topology[\low]
+            );
+
+            Ndef(\mutantString)[999] = \pset -> Pbind(
+                \dur, 0.01,
+                \trigRate, ~slider.(0).linexp(0,1,1,100),
+                
+                \damp, ~slider.(1),
+                \exciterFilter, ~slider.(2).linexp(0, 1, 30, 3000),
+                \fuzz, ~slider.(3).linlin(0, 1, 0.001, 1) - 0.001,
+                // \subharmonic, ~slider.(4).linlin(0, 1, 1, 4),
+                \subharmonic, 2,
+
+                \filter, ~slider.(5).linexp(0, 1, 50, 8000),
+                \q, ~slider.(6).linexp(0, 1, 0.1, 2),
+                \shaper, ~slider.(7),
+
+                \amp, ~knob.(0).linexp(0, 1, 0.01, 1).lag(0.01) - 0.01,
+                \fb, ~knob.(1).linlin(0,1,-1,1),
+
+                \verbMix, ~knob.(2).linlin(0, 1, -1, 1),
+                \verbSize, ~knob.(3).linlin(0,1,1,1000),
+
+                \dispMix, ~knob.(4),
+                \dispResonance, ~knob.(5),
+                \dispFreq, 80,
+            );
+)
+

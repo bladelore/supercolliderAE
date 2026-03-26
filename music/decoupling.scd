@@ -5,14 +5,14 @@ Server.killAll()
 SynthDef(
     \sinPluck,
     {
-        var env = EnvGen.kr(Env.perc(0.01, 0.5), doneAction: 2);
+        var env = EnvGen.kr(Env.perc(\atk.kr(0.01), 0.5), doneAction: 2);
         var freq = \freq.kr(440);
         // var sig = SyncSaw.ar(freq, [freq * 1.5, freq]) * env;
-        var sig = SinOsc.ar(freq.lag(100)) * env;
-        sig = RLPF.ar(sig, 300 + ((env + 1) * 1200), 2);
+        var sig = SinOscFB.ar(freq.lag(100), \fb.kr(0)) * env;
+        sig = RLPF.ar(sig, \lpf.kr(300) + ((env + 1) * 1200), 2);
         // sig = RLPF.ar(sig, 75, 2);
         // sig = (sig * 3).clip();
-        // sig = (sig * \clip.kr(1)).softclip();
+        // sig = (sig * \clip.kr(0.5)).tanh();
         sig = Pan2.ar(sig, \pan.kr(0));
         sig = sig * \gain.kr(0).dbamp;
         sig = sig * \amp.kr(1);
@@ -20,18 +20,22 @@ SynthDef(
     }
 ).add;
 
-// SynthDef(
-//     \sawPluck,
-//     { |freq = 440, syncMult = 1.5, amp = 1|
-//         var env = EnvGen.kr(Env.perc(0.01, 0.3), doneAction: 2);
-//         EnvGen.kr(Env.perc(0.01, 0.3), doneAction: 2);
-//         var sig = SyncSaw.ar(freq, [freq * syncMult, freq]) * env;
-//         sig = RLPF.ar(sig, 300 + ((env + 1) * 1200), 2);
-//         sig = sig * amp;
-//         Out.ar(0, sig ! 2);
-//     }
-// ).add;
+SynthDef(
+    \sawPluck,
+    { |freq = 440, syncMult = 1.5|
+        var env = EnvGen.kr(Env.perc(\atk.kr(0.01), 0.3), doneAction: 2);
+        // EnvGen.kr(Env.perc(0.01, 0.3), doneAction: 2);
+        var sig = SyncSaw.ar(freq, [freq * syncMult, freq]) * env;
+        sig = RLPF.ar(sig, \lpf.kr(300) + ((env + 1) * 1200), 2);
+        sig = Balance2.ar(sig[0], sig[1], \pan.kr(0));
+        sig = sig * \gain.kr(0).dbamp;
+        sig = sig * \amp.kr(1);
+        Out.ar(0, sig);
+    }
+).add;
 )
+
+Pan2
 
 120/t.tempo
 
@@ -66,32 +70,40 @@ x = {
     filter = filter.play(t);
     
     a = Pbind(
-        \instrument, \sinPluck,
+        \instrument, Pseq([\sinPluck, \sinPluck], inf),
         \ctranspose, -1,
         \scale, Scale.chromatic.tuning_(\just),
-        // \amp, Pseq([0.5, 0.25, 0.25, 0.5, 0.25, 0.25, 0.5] * 1, inf),
+        \amp, Pseq([0.5, 0.25, 0.25, 0.5, 0.25, 0.25, 0.5] * 0.2, inf),
+        \atk, Pseq([0.1, 0.5], inf) * 1,
+        \lpf, Pseq([300, 70, 300], inf),
+        \syncMult, 0.5,
+        // \fb, Pwhite(0,0.2,inf),
         // \clip, ~pmodenv.(Pseq([1, 2], inf), 4, 1, \sine),
         \octave, 4,
-        // \strum, Pseq([0.01, 0, 0, 0, 0.01], inf),
-        \strum, 0.01,
-        \degree, Pseq([\Cm9_G, \Gm, \Cm_g, \Cm_eb, \Ebsus2, \Fsus4, \Cm9_G, \Fm9].chordProg, inf).stutter(32*2),
+        \strum, Pseq([0.01, 0, 0, 0, 0.01], inf),
+        // \strum, 0.01,
+        \degree, Pseq([\Cm9_G, \Gm, \Cm_g, \Cm_eb, \Ebsus2, \Fsus4, \Cm9_G, \Fm9].chordProg, inf).stutter(28),
         \dur, 4/16,
         \pan, -1,
         \out, [~mainout, ~miVerb]
     ).play;
 
     b = Pbind(
-        \instrument, \sinPluck,
+        \instrument, Pseq([\sinPluck], inf),
         \ctranspose, -1,
         \scale, Scale.chromatic,
         // \clip, ~pmodenv.(Pseq([1, 2], inf), 6, 1, \sine),
-        // \amp, Pseq([0.5, 0.25, 0.25] * 1, inf),
+        // \fb, Pwhite(0,0.2,inf),
+        \amp, Pseq([0.5, 0.25, 0.25] * 0.2, inf),
+        \atk, Pseq([0.05, 0.1, 0.2] * 1, inf),
+        \lpf, Pseq([300, 80, 300, 30], inf),
+        \syncMult, 0.5,
         // \strum, 0.01,
-        // \strum, Pseq([0.01, 0, 0, 0.01], inf),
+        \strum, Pseq([0.01, 0, 0, 0.01], inf),
         \octave, 4,
-        \degree, Pseq([\Cm9_G, \Gm, \Cm_g, \Cm_eb, \Ebsus2, \Fsus4, \Cm9_G, \Fm9].chordProg, inf).stutter(24*2),
+        \degree, Pseq([\Cm9_G, \Gm, \Cm_g, \Cm_eb, \Ebsus2, \Fsus4, \Cm9_G, \Fm9].chordProg, inf).stutter(24),
         // \dur, Pseq([2/16], inf).stutter(16),
-        \dur, 3/16,
+        \dur, 3/16 * 4,
         \pan, 1,
         \out, [~mainout, ~miVerb]
     ).play;
