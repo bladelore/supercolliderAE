@@ -221,3 +221,79 @@ b = Buffer.read(s, ExampleFiles.child);
 	sig;    
 }.play;
 )
+
+
+(
+Ndef(\additiveWavetablePad).fadeTime = 8;
+
+Ndef(\additiveWavetablePad).set(\wt, ~wt.asControlInput).play(~bus1);
+
+Ndef(\additiveWavetablePad).set(\transpose, -12, \gain, 0);
+
+Ndef(\additiveWavetablePad)[999] = \pset -> Pbind(
+    \amp, 1,
+    \dur, 0.01, 
+    \airSpeed, ~knob.(5),
+    \startFrame, ~knob.(6).linlin(0,1,0,~wt.numFrames - 1),
+    \endFrame, Pkey(\startFrame) + 1,
+    \ampThresh, ~knob.(7).linlin(0,1,0.6,0.1)
+);
+
+            Ndef(\additiveWavetablePad).set(\wt, ~wt.asControlInput).play(~bus4);
+            Ndef(\additiveWavetablePad).set(\transpose, -12, \gain, 0);
+            Ndef(\additiveWavetablePad)[999] = \pset -> Pbind(
+                \amp, 1,
+                \dur, 0.01, 
+                \airSpeed, 0.5,
+                \startFrame, 3,
+                \endFrame, Pkey(\startFrame) + 1,
+                \ampThresh, 0,
+                // \flatten, 1,
+            );
+
+)
+(
+    a = "/Users/aelazary/Desktop/Samples etc./matchstick burning/match impulse.wav";
+    a = Buffer.read(s, a);
+    AdditiveWavetable.analyse(s, a, numPartials: 64, windowSize: 512,
+        action: { |wt|
+        ~wt = wt;
+        ~wt.loadBuffers(s);
+    });
+)
+
+(
+    Ndef(\additiveWavetablePad).clear;
+
+    Ndef(\additiveWavetablePad, {
+        var sig;
+        var bufs = \wt.kr(0 ! 4);
+        var scale = Scale.minor.tuning_(\just);
+
+        var phase = Phasor.ar(0, BufFrames.kr(bufs[0]) / (s.sampleRate * \rate.kr(5)));
+        // var phase = LFNoise2.ar(BufFrames.kr(~wt.freqBuf) / (s.sampleRate * 10)).linlin(-1, 1, 0, 1);
+
+        sig = AdditiveReader(bufs[0], bufs[1], bufs[2], bufs[3], 12)
+            .readPhase(phase, startFrame: \startFrame.kr(200), endFrame: \endFrame.kr(201))
+            .transpose(\transpose.kr(-12))
+            .hpFilter(LFNoise2.ar(0.1).exprange(5, 4000))
+            .spectralTilt(LFNoise2.ar(0.1).range(6, -6))
+            .ampSlew(\ampAtk.kr(10), \ampRel.kr(10))
+            .ampAbove(\ampThresh.kr(0.6))
+            .quantizePartials(scale, \quantize.kr(0.8), 30.midicps)
+            .ampSlew(\ampAtk.kr(10), \ampRel.kr(10))
+            .hpFilter(\hpFilter.kr(50))
+            .lpFilter(\lpFilter.kr(1000))
+            // .ampNormalise(-50, \flatten.kr(0))
+            .limiter
+            .oscBank(randomPhase: 1)
+            .air(amount: 1, speed: \airSpeed.kr(0.8), min: 0.1, max: 0.9)
+            .render
+        ;
+
+        sig = sig * 0.01;
+        sig = sig * \amp.kr(1).lag;
+        sig = sig * \gain.kr(0).dbamp;
+        // sig = sig.sanitize;
+    });
+)

@@ -4,12 +4,12 @@ Conductor {
 
     *new { |name, clock|
         var advance = Condition.new;
-        advance.test = false;
         
         ^super.newCopyArgs(advance, name ?? "Conductor", clock ?? TempoClock.default).init;
     }
 
     init {
+        advance.test = false;
         loopIndex = 0;
         charIndex = 0;
         quant = 0;
@@ -25,6 +25,15 @@ Conductor {
 
         charIndex = (charIndex + 1) % 26;
         if (charIndex == 0) { loopIndex = loopIndex + 1 };
+    }
+
+    reset {
+        advance.test = false;
+        loopIndex = 0;
+        charIndex = 0;
+        currentLabel = nil;
+        targetSection = nil;
+        skipSectionBool = false;
     }
     
     nextFunc {

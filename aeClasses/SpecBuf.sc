@@ -27,7 +27,7 @@ SpecBuf {
 	}
 
 	analysisBufs {
-		^analysis.flat.collect(_.bufnum)
+		^analysis.flat;
 	}
 
 	analysisForChannel { |ch = 0|
