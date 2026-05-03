@@ -1,10 +1,12 @@
 (
     ~sewer = Dictionary();
-    ~break = Dictionary();
+    ~break = Dictionary(); 
     ~break2 = Dictionary();
     ~analyzeSlices.("/Users/aelazary/Desktop/Samples etc./Field recs/Vienna Sewer 3.wav", ~sewer, 0.3, \centroid, chans: 2);
     ~analyzeSlices.("/Users/aelazary/Desktop/Samples etc./Silent Hill/Drum Loops/Silent Hill 4/Wounded Warsong/090GRAVE.WAV", ~break, 0.1, \centroid, chans: 2);
 )
+
+k.gui
 
 (
 var sample = ~sewer;
@@ -158,11 +160,14 @@ t = TempoClock.new(147/60).permanent_(true).schedAbs(0, {t.beatsPerBar_(4)});
 
     Pdef(\empty, Pbind(\instrument, \rest));
 
-    ~new_advance.();
+    ~player = Conductor(\player, t);
+    ~player.listen((type: \modality, device: k, key: \tr, button: \fwd));
+    ~player.quant_(0);
+    ~player.targetSection_(nil);
     //routine
     x = {
 
-            \a.postln;
+        ~player.label;
 
             b = Buffer.read(s, "/Users/aelazary/Desktop/Samples etc./feedback cymbals/feedback cymbals-5.wav");
             Ndef(\sample,
@@ -186,12 +191,15 @@ t = TempoClock.new(147/60).permanent_(true).schedAbs(0, {t.beatsPerBar_(4)});
                     sines = [sinesL, sinesR];
                     
                     sig = SelectX.ar(\source.kr(1), [sines, sig]) * \gain.kr(0).dbamp;
+                    sig = HPF.ar(sig, 200);
                 });
 
             Ndef(\sample).set(\buf, b, \pos, 0, \rate, 1, \loop, 1, \gain, 0).play(~bus4);
             Ndef(\sample)[999] = \pset -> Pbind(\source, ~knob.(3), \dur, 0.01);
+
+        ~player.wait;
             
-        ~advance.wait;    
+        ~player.label;
 
             Pdef(\p1,
                 ~makeSubdivision.(
@@ -240,14 +248,15 @@ t = TempoClock.new(147/60).permanent_(true).schedAbs(0, {t.beatsPerBar_(4)});
 
                 Pbind(\dec, ~slider.(4).linexp(0, 1, 0.2, 2)) <>
                 Pbind(\rel, ~slider.(4).linexp(0, 1, 0.2, 2)) <>
+                Pbind(\pan, Pwhite(-0.8, 0.8, inf)) <>
 
                 Pswitch1([Pdef(\kick),  Pbind(\dur, 1, \dec, Pkey(\dur)) <> Pdef(\specSample), Pdef(\cut2)], PlaceAll([3, 2, 2, 1, 2, 1, 2, 1] - 1, inf)) <>
                 Pdef(\p1)
             ).play(t);
 
-        ~advance.wait;
+        ~player.wait;
 
-            \b.postln;
+        ~player.label;
 
             Pdef(\perc,
                 //map chance and speed ratio
@@ -262,14 +271,15 @@ t = TempoClock.new(147/60).permanent_(true).schedAbs(0, {t.beatsPerBar_(4)});
 
                 Pbind(\dec, ~slider.(4).linexp(0, 1, 0.2, 2)) <>
                 Pbind(\rel, ~slider.(4).linexp(0, 1, 0.2, 2)) <>
+                Pbind(\pan, Pwhite(-0.8, 0.8, inf)) <>
 
                 Pswitch1([Pdef(\kick),  Pbind(\dur, 1, \dec, Pkey(\dur)) <> Pdef(\kick2), Pdef(\cut2)], PlaceAll([3, 2, 2, 1, 2, 1, 2, 1] - 1, inf)) <>
                 Pdef(\p1)
             ).play(t);
 
-        ~advance.wait;
+        ~player.wait;
 
-            \c.postln;
+        ~player.label;
         
             Pdef(\perc).stop;
 
@@ -337,20 +347,40 @@ t = TempoClock.new(147/60).permanent_(true).schedAbs(0, {t.beatsPerBar_(4)});
             Pdef(\fills,
                 Pbind(
                     \atk, 0, 
-                    \rel, ~slider.(4).linexp(0, 1, 0.2, 0.7), 
-                    \rate, ~slider.(3).linlin(0, 1, 1, 3)
+                    // \rel, ~slider.(4).linexp(0, 1, 0.2, 0.7), 
+                    \rel, 0.3,
+                    \rate, 1,
+                    \gain, 10,
+                    \pan, Pwhite(-0.8, 0.8)
                 ) <>
                 Pdef(\specSample) <>
                 ~filterBeat.(key: Pkey(\eventcount), beat:[3], mod: 3, reject: 1) <>
                 ~filterBeat.(key: Pkey(\cyclecount), beat:[1, 3, 4, 5], mod: 10, reject: 1) <>
                 Pdef(\p1)
             ).play(t);
-        
-        ~advance.wait;
 
-            \d.postln;
+        ~player.wait;            
+        
+        ~player.label;
+
+            Pdef(\fills,
+                Pbind(
+                    \atk, 0, 
+                    \rel, ~slider.(4).linexp(0, 1, 0.2, 0.7), 
+                    // \rel, 0.3,
+                    \rate, 1,
+                    \gain, 0,
+                    \pan, Pwhite(-0.8, 0.8)
+                ) <>
+                Pdef(\specSample) <>
+                ~filterBeat.(key: Pkey(\eventcount), beat:[3], mod: 3, reject: 1) <>
+                ~filterBeat.(key: Pkey(\cyclecount), beat:[1, 3, 4, 5], mod: 10, reject: 1) <>
+                Pdef(\p1)
+            ).play(t);
+
 
             Pdef(\perc,
+                // Pbind(\gain, Pkey(\gain) + 6.dbamp) <>
                 Pbind(\verbMix, ~slider.(2)) <>
                 Pbind(\rate, ~slider.(3).linlin(0, 1, 0.5, 4)) <>
                 Pbind(\f0, ~slider.(3).linexp(0, 1, 10, 120)) <>
@@ -363,9 +393,9 @@ t = TempoClock.new(147/60).permanent_(true).schedAbs(0, {t.beatsPerBar_(4)});
                 Pdef(\p2)
             ).play(t);
 
-        ~advance.wait;
+        ~player.wait;
 
-            \e.postln;
+        ~player.label;
 
             Ndef(\droneA, {
                 var chain, sig;
@@ -423,23 +453,24 @@ t = TempoClock.new(147/60).permanent_(true).schedAbs(0, {t.beatsPerBar_(4)});
                 \drive, 20,
             );
 
-        ~advance.wait;
+        ~player.wait;
 
-            \f.postln;
+        ~player.label;
 
             Pdef(\fills,
                 Pbind(
                     \atk, 0,
                     \rel, ~slider.(4).linexp(0, 1, 0.2, 0.7), 
-                    \rate, ~slider.(3).linlin(0, 1, 1, 2)
+                    \rate, ~slider.(3).linlin(0, 1, 1, 2),
+                    \gain, 0
                 ) <>
                 Pdef(\specSample) <>
                 Pdef(\p1)
             ).play(t);
 
-        ~advance.wait;
+        ~player.wait;
 
-            \g.postln;
+        ~player.label;
 
             Pdef(\perc,
                 // Pbind(\verbMix, ~slider.(2)) <>
@@ -449,9 +480,9 @@ t = TempoClock.new(147/60).permanent_(true).schedAbs(0, {t.beatsPerBar_(4)});
                 Pdef(\p2)
             ).play(t);
 
-        ~advance.wait;
+        ~player.wait;
 
-            \h.postln;
+        ~player.label;
 
             Ndef(\droneA).play;
             Ndef(\droneA, {
@@ -520,9 +551,9 @@ t = TempoClock.new(147/60).permanent_(true).schedAbs(0, {t.beatsPerBar_(4)});
                 Pdef(\p2)
             ).play(t);
 
-        ~advance.wait;
+        ~player.wait;
 
-            \i.postln;
+        ~player.label;
 
             Pdef(\fills).stop;
 
@@ -534,9 +565,9 @@ t = TempoClock.new(147/60).permanent_(true).schedAbs(0, {t.beatsPerBar_(4)});
                 Pdef(\p1)
             ).play(t);
 
-        ~advance.wait;
+        ~player.wait;
 
-            \j.postln;
+        ~player.label;
 
             Pdef(\p3,
                 ~makeSubdivision.(
@@ -556,9 +587,9 @@ t = TempoClock.new(147/60).permanent_(true).schedAbs(0, {t.beatsPerBar_(4)});
                 Pdef(\p3)
             ).play(t);
 
-        ~advance.wait;
-            
-            \end.postln;
+        ~player.wait;
+        
+        ~player.label(\end);
 
             Pdef(\perc).stop;
 

@@ -361,4 +361,78 @@ SynthDef(\rongsinator, {|pan=0, sustainTime=0.01, f0=100.05, structure=0.5, brig
 		
 		Out.ar(\out.kr(0), sig);
 	}).add;
+
+	SynthDef(\dsf, {
+        var fb, fbAmt, fc, fm, rate, lpf, modStereo, atk, dec, tFreq, tPhase, a0, a0Curve, beta, theta, denom, numer, dispMix, env, sig, verbTime, verbDamp;
+        
+        fbAmt = \fb.kr(0).(linexp(0,1,0.01, 1) - 0.01).lag;
+        fb = Select.ar(fbAmt > 0, [DC.ar(1 ! 2), LocalIn.ar(2) * fbAmt]);
+
+        fc  = \fc.kr(150).lag;
+        fm = \fm.kr(4890).lag2;
+        tFreq = \tFreq.kr(80).lag;
+        rate = \rate.kr(0.5);
+        a0Curve = \curve.kr(0).lag;
+        lpf = \lpf.kr(20000).lag;
+        dispMix = \disperserMix.kr(0).lag;
+        modStereo = \modStereo.kr(240).lag;
+
+        fm = [fm - (modStereo * 0.5), fm + (modStereo * 0.5)];
+        
+        tPhase = Phasor.ar(0, SampleDur.ir / tFreq);
+        a0 = Phasor.ar(0, SampleDur.ir * rate);
+        
+        atk = (1 / rate) * \atk.kr(0);
+        dec = (1 / rate) * \dec.kr(0.9);
+
+        env = IEnvGen.ar(
+            Env([0, 1, 0], [atk * rate, dec * rate], \envCurve.kr(0)),
+            a0
+        );
+
+        a0 = (1 - a0).lincurve(0, 1, 0, 0.9, a0Curve);
+
+        a0 = LPF.ar(a0, lpf);
+        
+        beta  = 2pi * fm * tPhase;
+
+        theta = Phasor.ar(0, fc / SampleRate.ir * 2pi, 0, 2pi) + (fb * 2pi);
+
+        denom = (1 + a0.squared) - (2 * a0 * cos(beta));
+        numer = (1 - a0.squared) * sin(theta - beta);
+
+        sig = numer / (denom + 1e-10);
+
+        sig = Disperser.ar(
+            input: sig,
+            freq: tFreq,
+            resonance: 0,
+            mix: dispMix,
+            feedback: 0
+        );
+
+        sig = sig.blend(sig.distort, \distort.kr(0).lag) * 0.1;
+
+        sig = sig * LPF.ar(env, lpf);
+
+        sig = SelectX.ar(\pitchMix.kr(0), [sig,
+
+        PitchShift.ar(sig,
+            pitchRatio: \pitchRatio.kr(1),
+            windowSize: \windowSize.kr(0.01),
+            pitchDispersion: \pitchDispersion.kr(1),
+            timeDispersion: \timeDispersion.kr(0.1))]
+        );
+
+        verbTime = LFNoise2.kr(0.02, 0.1, 1.03);
+        verbDamp = LFNoise2.kr(0.05).range(0.0, 0.7);
+        sig = MiVerb.ar(sig, verbTime, \verbMix.kr(0.01).lag, verbDamp, 0.1);
+
+        LocalOut.ar(sig);
+
+        sig = sig.sanitize;
+
+        sig = Splay.ar(sig, \spread.kr(1));
+        Out.ar(\out.kr(0), sig);
+    }).add;
 )

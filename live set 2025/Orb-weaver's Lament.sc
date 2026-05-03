@@ -13,13 +13,19 @@
 
 (
 
+var player;
+
 b = Buffer.read(s, "/Users/aelazary/Desktop/Samples etc./feedback cymbals/feedback cymbals-4.wav");
 c = Buffer.read(s, "/Users/aelazary/Desktop/Samples etc./feedback cymbals/feedback cymbals-5.wav");
 
-~new_advance.();
+player = Conductor(\player, t);
+player.listen((type: \modality, device: k, key: \tr, button: \fwd));
+player.quant_(0);
+player.targetSection_(nil);
 
 x = {
-    \a.postln;
+    
+    player.label;
 
         ~bufA.zero;
         ~specBuf.do{|item| item.zero};
@@ -44,7 +50,8 @@ x = {
             .set(\inbus, ~spectralGrains, \srcbuf, ~bufA, \specbuf, `[~specBuf], \fftSize, ~fftSize);
 
         Ndef(\specGrains)[999] = \pset -> Pbind(
-            \amp, ~slider.(0),
+            // \amp, ~slider.(0),
+            \amp, 1,
             \dur, 0.01,
             \posRate, ~knob.(0).linlin(0,1,0.01,1),
             \tFreq, ~knob.(1).clip(0.001,1).linexp(0.001,1,10,1000),
@@ -81,9 +88,7 @@ x = {
         );
         Ndef(\morph).play(~bus1);
 
-    ~advance.wait;
-
-        \b.postln;
+    player.wait; player.label;
 
         Ndef(\guitar, \input)
             .set(\in, 0, \amp, 1, \gain, -12)
@@ -91,7 +96,7 @@ x = {
 
         Ndef(\specGrains).play(~bus1);
 
-    ~advance.wait;
+    player.wait; player.label;
 
         c = Buffer.read(s, "/Users/aelazary/Desktop/Samples etc./wand recs/speaker2.wav");
 
@@ -99,9 +104,7 @@ x = {
             .set(\buf, c, \rate, 1)
             .play(~bus2);
 
-    ~advance.wait;
-
-        \d.postln;
+    player.wait; player.label(\end);
 
         Ndef(\guitar, \input)
             .set(\in, 0, \amp, 1, \gain, -12)
@@ -148,7 +151,7 @@ SynthDef(\gutter_tracker, {
 
     pitch = \pitchShift.kr(0.25, spec: [0.05,2.0]).lag;
 
-    chain = ~initChain.(numPartials: 24, freq: 440);
+    chain = ~initChain.(numPartials: 12, freq: 440);
     // chain = ~extractSines.(chain, src, freqLag: \freqLag.kr(0.3), ampLag: \ampLag.kr(0.5), order: 1, transpose: 0, winSize: 1024, fftSize: 4096, hopSize: 4, numSines: 6);
     chain = ~extractSines_smooth.(chain, src, freqLag: \freqLag.kr(0.1), ampLag: \ampLag.kr(1), order: 1, transpose: 0.01, thresh: envFollower, numSines: 6);
     
@@ -232,15 +235,15 @@ SynthDef(\gutter_tracker, {
     
 // );
 
-b = Buffer.read(s, "/Users/aelazary/Desktop/Samples etc./feedback cymbals/feedback cymbals-4.wav");
-~gutter = Bus.audio(s, 2);
-Ndef(\guitar, \input).set(\in, 0, \amp, 1, \gain, -12).play(~gutter);
+    b = Buffer.read(s, "/Users/aelazary/Desktop/Samples etc./feedback cymbals/feedback cymbals-4.wav");
+    ~gutter = Bus.audio(s, 2);
+    Ndef(\guitar, \input).set(\in, 0, \amp, 1, \gain, -12).play(~gutter);
 
 // Ndef(\sample, {PlayBuf.ar(2, \buf.kr(0), startPos: \pos.kr(10000), rate: \rate.kr(0), loop: \loop.kr(0)) * \gain.kr(0).dbamp;});
 // Ndef(\sample).fadeTime = 0;
 // Ndef(\sample).set(\buf, b, \pos, 0, \rate, 0.5, \loop, 1, \gain, -12).play([~gutter.channels]);
 
-Ndef(\gutter, \gutter_tracker).set(\inbus, ~gutter).play(~bus2);
+    Ndef(\gutter, \gutter_tracker).set(\inbus, ~gutter).play(~bus2);
 // Ndef(\gutter)[999] = \pset -> Pbind(
 //     \dur, 0.01, 
 

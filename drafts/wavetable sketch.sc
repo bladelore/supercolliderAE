@@ -209,20 +209,29 @@ Ndef(\fbWt_double).set(\bufferA, ~bufferA, \bufferB, ~bufferB).play;
 
 Compander
 
+~test.()
+
+~bufferA
+
 SoundFile.openRead("/Users/aelazary/Desktop/Samples etc./tom erbe impulse responses/effectronImpResp.wav").numChannels
 
 (
     var file, table;
+
+    t.tempo = 160/60;
+
     ~getBuffers = {|file, frames|
         SoundFile.openRead(file).numChannels.collect({|i| Buffer.readChannel(s, file, channels:[i], numFrames: -1);});
     };
 
-    file = "/Users/aelazary/Desktop/Samples etc./tom erbe impulse responses/effectronImpResp.wav";
+    // file = "/Users/aelazary/Desktop/Samples etc./tom erbe impulse responses/effectronImpResp.wav";
     file = "/Users/aelazary/Desktop/Samples etc./scythes/POV freehand peening a scythe blade using a bar peen anvil (to really annoy the neighbours).wav";
     // file = "/Users/aelazary/Desktop/Samples etc./scythes/Sharpen the scythe.wav";
-    // file = "/Users/aelazary/Desktop/Samples etc./matchstick burning/match impulse.wav";
-    // ~buffer = SoundFile.openRead(file).numChannels.collect({|i| Buffer.readChannel(s, file, channels:[i], numFrames: -1);});
-    ~buffer = ~getBuffers.(file, -1);
+    file = "/Users/aelazary/Desktop/Samples etc./matchstick burning/match impulse.wav";
+
+    ~bufferA = ~getBuffers.("/Users/aelazary/Desktop/Samples etc./scythes/POV freehand peening a scythe blade using a bar peen anvil (to really annoy the neighbours).wav", -1);
+    ~bufferB = ~getBuffers.("/Users/aelazary/Desktop/Samples etc./matchstick burning/match impulse.wav", -1);
+
 
     SynthDef(\fbWt_single, {|buffer=#[0,1]|
 
@@ -234,7 +243,7 @@ SoundFile.openRead("/Users/aelazary/Desktop/Samples etc./tom erbe impulse respon
         var dec = Lag.kr(\dec.kr(0.2), globalLag);
         var sus = Lag.kr(\sus.kr(0), globalLag);
         var rel = Lag.kr(\rel.kr(0), globalLag);
-        
+
         var size = Lag.kr(\size.kr(128), globalLag);
         var fb = Lag.kr(\fb.kr(0), globalLag);
 
@@ -278,37 +287,214 @@ SoundFile.openRead("/Users/aelazary/Desktop/Samples etc./tom erbe impulse respon
 
         sig = sig * EnvGen.ar(Env.adsr(atk, dec, sus, rel), \gate.kr(0.5), doneAction: 2);
 
+        sig = BRF.ar(sig, \lpf.kr(500), 2);
+
         Out.ar(\bus.kr(0), sig);
     }).add;
 
-        Pdef(\table,
-            PmonoArtic(
-                \fbWt_single,
-                \buffer, [~buffer],
-                \amp, 1,
-                \dur, 1,
-                \fb, 0,
-                \stereoOffset, 1,
-                // \dur, Pseq([0.5, 0.5, Rest(0.5)], inf),
-                //legato controls if notes are connected
-                \legato, Prand([0.5, 1], inf),
-                //use globalLag
-                \globalLag, 16,
-                \freq, Pseq(([30, 31, 30, 30]).midicps * 1, inf),
-                // \freq, 30,
-                \sweep, 16,
-                \size, Pseq([1024, 4096, 2048], inf ),
-                // \size, 512,
+    // Pdef(\table,
+    //     PmonoArtic(
+    //         \fbWt_single,
+    //         // \buffer, Pstep(Pseq([[~bufferA], [~bufferB]], inf), 2, inf),
+    //         \buffer, [~bufferB],
+    //         \amp, 1,
+    //         \fb, 0,
+    //         \stereoOffset, 1,
+    //         // \dur, Pseq([0.5, 0.5, Rest(0.5)], inf),
+    //         //legato controls if notes are connected
+    //         \legato, Prand([0.5, 1], inf),
+    //         //use globalLag
+    //         \globalLag, 1,
+    //         // \freq, Pseq(([30, 31, 30, 30]).midicps + 1, inf) * 0.25,
+    //         // \freq, 60,
+    //         \freq, 10,
+    //         \sweep, 16,
+    //         // \size, Prand([1024, 4096, 2048], inf ),
+    //         // \size, 4096,
+    //         \size, 13,
+    //         // \cycleOffset, 2,
+    //         // \cycleRate, Pseq([0.2, 0.5, 2] * 1, inf),
 
-                \cycleRate, Pseq([0.2, 0.5, 2] * 1, inf),
-                \atk, 1,
-                \dec, 0.8,
-                \sus, 1,
-                \rel, 1,
-                \gain, 10,
-                \out, ~bus2
-            )
-        ).play(t);
+    //         \dur, Prand([2, Rest(2)], inf),
+    //         \atk, 1,
+    //         \dec, 0.8,
+    //         \sus, 1,
+    //         \rel, 2,
+    //         \lpf, PmodEnv(Pexprand(50, 10000, inf), 3, \sine, inf),
+
+    //         // \dur, 0.25,
+    //         // \atk, 0.1,
+    //         // \dec, 0.2,
+    //         // \sus, 0,
+    //         // \rel, 0,
+
+    //         \gain, 10,
+    //         \out, ~bus2
+    //     )
+    // ).play(t);
+
+    // Pdef(\table,
+    //     PmonoArtic(
+    //         \fbWt_single,
+    //         // \buffer, Pstep(Pseq([[~bufferA], [~bufferB]], inf), 2, inf),
+    //         \buffer, [~bufferA],
+    //         \amp, 1,
+    //         \fb, 0,
+    //         \stereoOffset, 1,
+    //         // \dur, Pseq([0.5, 0.5, Rest(0.5)], inf),
+    //         //legato controls if notes are connected
+    //         \legato, Prand([0.5, 1], inf),
+    //         //use globalLag
+    //         \globalLag, 16,
+    //         // \freq, Pseq(([30, 31, 30, 30]).midicps + 1, inf) * 0.25,
+    //         // \freq, 60,
+    //         \freq, 10,
+    //         \sweep, 16,
+    //         \size, Prand([1024, 4096, 2048], inf ),
+    //         // \size, 4096,
+    //         // \size, 13,
+    //         // \cycleOffset, 2,
+    //         // \cycleRate, Pseq([0.2, 0.5, 2] * 1, inf),
+
+    //         // \dur, Prand([2, Rest(2)], inf),
+    //         \dur, 2,
+    //         \atk, 1,
+    //         \dec, 0.8,
+    //         \sus, 1,
+    //         \rel, 2,
+    //         \lpf, PmodEnv(Pexprand(50, 10000, inf), 3, \sine, inf),
+
+    //         // \dur, 0.25,
+    //         // \atk, 0.1,
+    //         // \dec, 0.2,
+    //         // \sus, 0,
+    //         // \rel, 0,
+
+    //         \gain, 10,
+    //         \out, ~bus2
+    //     )
+    // ).play(t);
+
+    // Pdef(\table,
+    //     PmonoArtic(
+    //         \fbWt_single,
+    //         // \buffer, Pstep(Pseq([[~bufferA], [~bufferB]], inf), 2, inf),
+    //         \buffer, [~bufferA],
+    //         \amp, 1,
+    //         \fb, 0,
+    //         \stereoOffset, PmodEnv(Pexprand(0.01, 1, inf), 1, \sine, inf),
+    //         // \dur, Pseq([0.5, 0.5, Rest(0.5)], inf),
+    //         //legato controls if notes are connected
+    //         \legato, Prand([0.5, 1], inf),
+    //         //use globalLag
+    //         \globalLag, 16,
+    //         // \freq, Pseq(([30, 31, 30, 30]).midicps + 1, inf) * 0.25,
+    //         \freq, 30,
+    //         // \freq, 10,
+    //         \sweep, 16,
+    //         // \size, Prand([1024, 4096, 2048], inf ),
+    //         \size, \512,
+    //         // \size, 4096,
+    //         // \size, 13,
+    //         // \cycleOffset, 2,
+    //         // \cycleRate, Pseq([0.2, 0.5, 2] * 1, inf),
+
+    //         \dur, Prand([2, Rest(2)], inf),
+    //         // \dur, 2,
+    //         \atk, 1,
+    //         \dec, 0.8,
+    //         \sus, 1,
+    //         \rel, 2,
+    //         \lpf, PmodEnv(Pexprand(50, 10000, inf), 3, \sine, inf),
+
+    //         // \dur, 0.25,
+    //         // \atk, 0.1,
+    //         // \dec, 0.2,
+    //         // \sus, 0,
+    //         // \rel, 0,
+
+    //         \gain, 10,
+    //         \out, ~bus2
+    //     )
+    // ).play(t);
+
+    Pdef(\table,
+        PmonoArtic(
+            \fbWt_single,
+            // \buffer, Pstep(Pseq([[~bufferA], [~bufferB]], inf), 2, inf),
+            \buffer, [~bufferA],
+            \amp, 1,
+            \fb, 0,
+            \stereoOffset, 1,
+            \legato, Prand([0.5, 1], inf),
+            \globalLag, 16,
+            \freq, Pseq(([30, 31, 30, 30]).midicps + 1, inf),
+            // \freq, 30,
+            // \freq, 10,
+            \sweep, 16,
+            // \size, Prand([1024, 4096, 2048], inf ),
+            \size, \512,
+            // \size, 4096,
+            // \size, 13,
+            // \cycleOffset, 2,
+            // \cycleRate, Pseq([0.2, 0.5, 2] * 1, inf),
+
+            \dur, Prand([2, Rest(2)], inf),
+            // \dur, 2,
+            \atk, 1,
+            \dec, 0.8,
+            \sus, 1,
+            \rel, 2,
+            \lpf, PmodEnv(Pexprand(50, 10000, inf), 3, \sine, inf),
+
+            // \dur, 0.25,
+            // \atk, 0.1,
+            // \dec, 0.2,
+            // \sus, 0,
+            // \rel, 0,
+
+            \gain, 10,
+            \out, ~bus2
+        )
+    ).play(t);
+
+    Pdef(\table,
+        PmonoArtic(
+            \fbWt_single,
+            // \buffer, Pstep(Pseq([[~bufferA], [~bufferB]], inf), 2, inf),
+            \buffer, [~bufferA],
+            \amp, 1,
+            \fb, 0,
+            \stereoOffset, 1,
+            \legato, Prand([0.5, 1], inf),
+            \globalLag, 16,
+            \freq, Pseq(([30, 31, 30, 30]).midicps + 1, inf),
+            // \freq, 30,
+            // \freq, 10,
+            \sweep, 16,
+            \size, Prand([1024, 4096, 2048], inf ),
+            // \size, \512,
+            // \cycleOffset, 2,
+            // \cycleRate, Pseq([0.2, 0.5, 2] * 1, inf),
+
+            \dur, Prand([2, Rest(2)], inf),
+            // \dur, 2,
+            \atk, 1,
+            \dec, 0.8,
+            \sus, 1,
+            \rel, 2,
+            \lpf, PmodEnv(Pexprand(50, 10000, inf), 3, \sine, inf),
+
+            // \dur, 0.25,
+            // \atk, 0.1,
+            // \dec, 0.2,
+            // \sus, 0,
+            // \rel, 0,
+
+            \gain, 10,
+            \out, ~bus2
+        )
+    ).play(t);
 )
 
 (

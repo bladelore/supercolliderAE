@@ -1,5 +1,4 @@
 (
-
     SynthDef(\additivePerc, {
         var sig, env;
         var atk = \atk.kr(0.01);
@@ -64,6 +63,8 @@
         
         Out.ar(\out.kr(0), sig);
     }).add;
+
+    
 )
 
 (
@@ -108,15 +109,23 @@ SynthDef(\segPlayer2, {|buf, slice = #[0, 1]|
 a = Buffer.read(s,"/Users/aelazary/Desktop/Samples etc./Silent Hill/Drum Loops/Silent Hill Origins/Snowblind/05 drums02.wav");
 // a = Buffer.read(s,"/Users/aelazary/Desktop/Samples etc./NEW sample lib/LAPerc-SampleLibrary/LAPerc-BellPlate3.wav");
 // a = Buffer.read(s,"/Users/aelazary/Desktop/Samples etc./NEW sample lib/LAPerc-SampleLibrary/LAPerc-Cajon3.wav");
-// a = Buffer.read(s, "/Users/aelazary/Desktop/Samples etc./hollywood edge - foley sound library/FSL-05/FSL-05-Card Shoe Clicks; Dealer Card Shoe Clicks. - Dealing Cards.wav");
-a = Buffer.read(s, "/Users/aelazary/Desktop/Samples etc./NEW sample lib/LAPerc-SampleLibrary/LAPerc-TempleBowls.wav");
-// a = Buffer.read(s, "/Users/aelazary/Desktop/Samples etc./hollywood edge - foley sound library/FSL-03/FSL-03-Wood Staff Hits, Multiple; Multiple Light Wood Staff Impacts With Handling. - Wood Hits.wav");
-AdditiveSines.analyse(s, a, numPartials: 32, windowSize: 2048, slicerThreshold: 0.3, order: 1, detectionThreshold: -90,
+// b = Buffer.read(s, "/Users/aelazary/Desktop/Samples etc./hollywood edge - foley sound library/FSL-05/FSL-05-Card Shoe Clicks; Dealer Card Shoe Clicks. - Dealing Cards.wav");
+// a = Buffer.read(s, "/Users/aelazary/Desktop/Samples etc./NEW sample lib/LAPerc-SampleLibrary/LAPerc-TempleBowls.wav");
+b = Buffer.read(s, "/Users/aelazary/Desktop/Samples etc./hollywood edge - foley sound library/FSL-03/FSL-03-Wood Staff Hits, Multiple; Multiple Light Wood Staff Impacts With Handling. - Wood Hits.wav");
+
+AdditiveSines.analyse(s, a, numPartials: 32, windowSize: 128, slicerThreshold: 0.3, order: 1, detectionThreshold: -50,
     action: { |wt|
         ~wt = wt;
         ~wt.loadBuffers(s);
-        "done".postln;
-    });
+        "done1".postln;
+});
+
+AdditiveSines.analyse(s, a, numPartials: 32, windowSize: 512, slicerThreshold: 0.3, order: 1, detectionThreshold: -90,
+    action: { |wt|
+        ~wt2 = wt;
+        ~wt2.loadBuffers(s);
+        "done2".postln;
+});
 )
 
 (
@@ -125,40 +134,48 @@ AdditiveSines.analyse(s, a, numPartials: 32, windowSize: 2048, slicerThreshold: 
     Pdef(\p1,
         ~makeSubdivision.(
             PlaceAll([1.5, 1.5, 1] * 1, inf),
-            PlaceAll([[2, 1], 2, 2], inf)
+            PlaceAll([[2, 1], [2, 3], 2], inf)
+        )
+    );
+
+    Pdef(\p1,
+        ~makeSubdivision.(
+            PlaceAll([1, 1, 1], inf),
+            PlaceAll([4, 4, 4, 4], inf)
         )
     );
 
     Pdef(\additivePerc,
         Pbind(
             \wt, [~wt.asControlInput],
-            \instrument, \additivePerc,
+            // \wt, Prand([[~wt.asControlInput], [~wt2.asControlInput]], inf),
 
-            // \dur, Pwrand([1, 0.5, 2, 3], [1, 2, 0.25, 0.125].normalizeSum, inf).stutter(4),
-            // \dur, Pseq([0.25, Rest(0.25), 0.5, Rest(0.25), 0.25, 0.25, 0.25, 0.75, 0.5, 0.25], inf),
-            // \dur, Pseq([0.25, 0.5, 0.25, 0.25], inf),
+            \instrument, \additivePerc,
             // \dur, 1,
-            // \atk, 0.02,
+            // \atk, 0.1,
+
             // \atk, Pwrand([0.1, 0.05], [1, 0.25].normalizeSum, inf),
             \dec, Pwrand([0.1, 1], [0.5, 0.5], inf),
             \sus, Pwrand([0, 0.1], [0.5, 0.5], inf),
+            
             // \sus, 0,
-            \rel, 0.5,
+            \rel, 0.1,
             \transpose, 0,
             \oneshot, 1,
             \sliceStart, Pstep([0, 5, 2], 1, inf),
-            \ampAtk, 0,
-            \ampRel, 0,
+            // \ampAtk, 10,
+            // \ampRel, 10,
             // \ampThresh, Prand([0.2, 0, 0.1], inf),
             \flatten, Pwrand([0, 1], [0.5, 0.5], inf).stutter(2),
             \odd, 1,
             \even, 1,
-            \rate, 0.5,
+            // \rate, 1,
+            \rate, Pwhite(0.1, 1, inf),
             \lpf, 20000,
             \tilt, 6,
             \quantize, 0,
-            \spread, 1,
-            \slice, ~wt.pGetSlice(Pseries(0, 1, inf).wrap(0, 16)).stutter(16),
+            \spread, Prand([0, 1], inf),
+            \slice, ~wt.pGetSlice(Pseries(0, 1, inf).wrap(0, 16)),
             \resFreq, 60,
             \resDistort, 1,
             \resAmp, 1,
@@ -168,7 +185,7 @@ AdditiveSines.analyse(s, a, numPartials: 32, windowSize: 2048, slicerThreshold: 
             \pan, Pwhite(-0.5, 0.5,inf),
             \out, ~bus2
         )
-        // <> ~filterBeat.(key: Pkey(\cyclecount), beat:[2, 5], reject: 1)
+        // <> ~filterBeat.(key: Pkey(\cyclecount), beat:[2, 5], reject: 0)
         <> Pdef(\p1)    
     ).play(t);
 )

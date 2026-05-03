@@ -1,4 +1,40 @@
 (
+SynthDef(\eightoheight1,{|gate=0.5|
+	var sig, globalLag, freq, pitchEnv, atk, dec, sus, rel, sweep, drive;
+
+	globalLag = \globalLag.kr(0);
+	freq = Lag.kr(\freq.kr(60), globalLag);
+	atk = Lag.kr(\atk.kr(0.05), globalLag);
+	dec = Lag.kr(\dec.kr(0.2), globalLag);
+	sus = Lag.kr(\sus.kr(0), globalLag);
+	rel = Lag.kr(\rel.kr(0), globalLag);
+	drive = Lag.kr(\drive.kr(10).neg, globalLag);
+	sweep = Lag.kr(\sweep.kr(1.5), globalLag);
+
+	pitchEnv = 1 + (
+		sweep * 
+		Env.perc(0.0, 0.13, curve: -4).ar * 
+		XLine.ar(1, 0.6, dec)
+	);
+
+	sig = SinOsc.ar(freq * pitchEnv);
+	sig = sig * EnvGen.ar(Env.adsr(atk, dec, sus, rel), gate, doneAction: 2);
+
+	sig = SelectX.ar(\driveMix.kr(1), [sig, (sig * drive.neg.dbamp).tanh * drive.abs.dbamp]);
+
+	sig = Compander.ar(sig, sig,
+		thresh: 0.01,
+		slopeAbove: 0.3,
+		clampTime: 0.002,
+		relaxTime: 0.1,
+	);
+	sig = sig * \gain.kr(0).dbamp;
+	sig = Pan2.ar(sig, \pan.kr(0));
+	sig = LeakDC.ar(in: sig, coef: 0.995);
+	sig = sig * \amp.kr(1);
+	Out.ar(\out.kr(0), sig);
+}).add;
+
 SynthDef(\hh, {|gate=1 out=0|
 	var sig;
 	sig = WhiteNoise.ar([0.8, 0.7]);
@@ -68,6 +104,8 @@ SynthDef(\clap, {
 	sig = sig * 2;
 	sig = RLPF.ar(sig, \hpf.kr(8000));
 	sig = sig.softclip;
+
+	sig = sig * \gain.kr(0).dbamp;
 
 	Out.ar(\out.kr(0), Pan2.ar(sig,pan,amp));
 	//By Nathan Ho aka Snappizz

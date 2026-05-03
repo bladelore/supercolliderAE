@@ -136,17 +136,17 @@ k.gui;
 
 (
 ~fm7SynthNames.do{|synthName, algo|
-	SynthDef(synthName, {|out=0, dur=0.01, sustain=0, freqScale=0.5, spread=0.25, pan=0, feedback=1.0, amp=0.5|
-		var env = Env.perc.kr(gate:1, timeScale: dur * (1+sustain), doneAction: Done.freeSelf);
+	SynthDef(synthName, {|out=0, dur=0.01, sustain=0, freqScale=0.5, spread=0.25, pan=0, feedback=1.0, amp=0.5, rand=0|
+		var env = EnvGen.kr(Env.perc(attackTime: \atk.kr(0), releaseTime: \rel.kr(1), gate:1, timeScale: dur * (1+sustain), doneAction: Done.freeSelf));
 		var ctls =
 		[
 			// freq, phase, amp
 			[freqScale * 300, pi.rand, 1],
 			[freqScale * 2500, pi.rand, 1],
-			[freqScale * SinOsc.ar(Rand(0.1,10.0)).exprange(3,100), 0, 1],
-			[freqScale * LFNoise2.ar(10).exprange(1300,0.5), 0, 1],
-			[freqScale * ExpRand(30,1500), pi.rand, 1],
-			[freqScale * ExpRand(30,500), pi.rand, 1]
+			[freqScale * SinOsc.ar(Rand(0.1,10.0)).exprange(3,100) * rand, 0, 1],
+			[freqScale * LFNoise2.ar(10).exprange(1300,0.5) * rand, 0, 1],
+			[freqScale * ExpRand(30,1500) * rand, pi.rand, 1],
+			[freqScale * ExpRand(30,500) * rand, pi.rand, 1]
 		];
 
 		var sig = FM7.arAlgo(algo, ctls , feedback * 2.0);
@@ -157,8 +157,10 @@ k.gui;
 	}).add;
 };
 )
+
+Synth(\fm7algo0, [sustain:1, dur:1, feedback:1, rand:1, freqScale: 0.1])
 (
-    SynthDef(\eightoheightsub,{|gate=0.5|
+    SynthDef(\eightoheight1,{|gate=0.5|
         var sig, globalLag, freq, pitchEnv, atk, dec, sus, rel, sweep, drive;
 
         globalLag = \globalLag.kr(0);
@@ -197,30 +199,32 @@ k.gui;
 
     Pdef(\subParams,
         PmonoArtic(
-            \eightoheightsub,
+            \eightoheight1,
             \amp, 1,
-            \dur, 0.125,
-            // \dur, Pseq([1.5, 1.5, 1.5, 1.5, 1, 1,], inf),
+            // \dur, 0.125,
+            \dur, Pseq([1.5, 1.5, 1.5, 1.5, 1, 1,], inf),
             // \dur, Pseq([0.5, 0.75, 0.75] * 2, inf),
             //legato controls if notes are connected
             \legato, Pwrand([0.5, 1], [0.75, 0.25], inf),
             //use globalLag 
             \globalLag, 9,
             \freq, Pseq(([25, 25, 25, 25] + 4).midicps, inf),
-            \sweep, 1,
+            \sweep, 5,
             \drive, 10,
-            \driveMix, 0,
+            \driveMix, 1,
             // \drive, Pseq([20, 10] * 0.1, inf),
             // \atk, Pseq([1, 2], inf),
-            \atk, 1,
+            \atk, 2,
             \dec, 0.1,
             \sus, 0.5,
             \rel, 0.2,
             \gain, 20,
-            \out, ~bus1
+            \out, ~bus4
         )
-    ).play(t);
+    ).play(t, quant: 1);
 )
+
+Pdef(\subParams).stop;
 
 (
     Pdef(\subParams).play(t);

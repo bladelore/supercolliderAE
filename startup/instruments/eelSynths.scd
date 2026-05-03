@@ -187,4 +187,44 @@
 
         Out.ar(\out.kr(0), sig.sanitize);
     }).add;
+
+
+    SynthDef(\fmStringMono, {|gate=0.5|
+        var globalLag = \globalLag.ar(1);
+        var atk = Lag.kr(\atk.kr(0.05), globalLag);
+        var dec = Lag.kr(\dec.kr(0.2), globalLag);
+        var sus = Lag.kr(\sus.kr(0), globalLag);
+        var rel = Lag.kr(\rel.kr(0), globalLag);
+        var sweep = Lag.kr(\sweep.kr(1.5), globalLag);
+        var pitchEnv = 1 + (
+            sweep * 
+            Env.perc(0.0, 0.13, curve: -4).ar * 
+            XLine.ar(1, 0.6, dec)
+        );
+        var midiPitch = Lag.ar(\midiPitch.ar(42.midicps()) * pitchEnv, globalLag);
+        var fb = Lag.ar(\fb.ar(-1), globalLag);
+        var filter = Lag.ar(\filter.ar(2000), globalLag);
+        var fuzz = Lag.ar(\fuzz.ar(0.01), globalLag);
+        var subharmonic = Lag.ar(\subharmonic.ar(1), globalLag);
+        var exciterFilter = Lag.ar(\exciterFilter.ar(200), globalLag);
+        var exciterAttack = Lag.ar(\exciterAttack.ar(1000), globalLag);
+        var exciterRelease = Lag.ar(\exciterRelease.ar(2000), globalLag);
+        var sig = DynGenRT.ar(1, \fmString, 
+            Impulse.ar(0) ! 2,
+            midiPitch,
+            fb,
+            filter,
+            fuzz,
+            subharmonic,
+            exciterFilter,
+            exciterAttack,
+            exciterRelease,
+        );
+        sig = sig * EnvGen.ar(Env.adsr(atk, dec, sus, rel), gate, doneAction: 2);
+        sig = Balance2.ar(sig[0], sig[1], \pan.kr(0));
+        sig = sig * \amp.kr(1);
+        sig = sig * \gain.kr(1).dbamp;
+        
+        Out.ar(\out.kr(0), sig.sanitize);
+    }).add;
 )

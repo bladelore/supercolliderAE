@@ -589,9 +589,7 @@ k.gui
 
         ~advance.wait;
 
-        \end.postln; 
-
-            Ndef(\specGrains).stop;
+            \end.postln; 
             
             Ndef(\sample).stop(fadeTime: 10);
             Pdef(\perc).stop;
@@ -630,6 +628,10 @@ k.gui
                 \dispResonance, ~knob.(5),
                 \dispFreq, 80,
             );
+
+        ~advance.wait;
+
+            Ndef(\specGrains).stop;
 
     }.fork(t);
 );

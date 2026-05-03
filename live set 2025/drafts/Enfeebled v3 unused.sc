@@ -4,13 +4,16 @@
     ~shPad2 = Dictionary();
     ~specBuff=Dictionary(); 
     ~analyzeSlices.("/Users/aelazary/Desktop/Samples etc./radioaporee/CityCountryMeworkumdrache.wav", ~break, 0.3, \centroid, chans: 2);
-    ~analyzeSlices.("/Users/aelazary/Desktop/Samples etc./Silent Hill/Drum Loops/Silent Hill 4/Wounded Warsong/090GRAVE.WAV", ~break2, 0.1, \centroid, chans: 2);
-
-    // ~analyzeSlices.("/Users/aelazary/Desktop/Samples etc./Missing Sounds 2016/DJF_174_C_CREEPY_PLUCKS.wav", ~break2, 0.1, \centroid, chans: 2);
+    // ~analyzeSlices.("/Users/aelazary/Desktop/Samples etc./Missing Sounds 2016/FAI_172_E_BassLoop_12.wav", ~break2, 0.1, \centroid, chans: 2);
+    ~analyzeSlices.("/Users/aelazary/Desktop/Samples etc./Missing Sounds 2016/DJF_174_C_CREEPY_PLUCKS.wav", ~break2, 0.1, \centroid, chans: 2);
+    // ~analyzeSlices.("/Users/aelazary/Desktop/Samples etc./Missing Sounds 2016/PHA_140_C_Synthloop_08.wav", ~break2, 0.1, \centroid, chans: 0);
+    // ~analyzeSlices.("/Users/aelazary/Desktop/Samples etc./Prism samples/Audio 0003 [2024-12-19 184904].aif", ~break2, 0.3, \centroid, chans: 2);
     ~makeSpec.("/Users/aelazary/Desktop/Samples etc./Silent Hill/Ambience/Silent Hill 4/Fortunate Sleep - Cat Scratchism Mix/FEEDIES 1.wav", ~specBuff, 16384, 2);
     ~roar_A= nil ?? {Bus.audio(s,2)};
     ~roar_B = nil ?? {Bus.audio(s,2)};
 )
+
+~roar_A
 
 (
     ~maxGrains = 25;
@@ -23,43 +26,39 @@
 )
 
 (
-    var player;
-    var sample = ~break; var sample2 = ~break2;
+    var sample = ~break;
+    var sample2 = ~break2;
 
     ~bufA.zero;
 
-    // t = TempoClock.new(137/60).permanent_(true).schedAbs(0, {t.beatsPerBar_(4)});
-    t.tempo = 137/60;
+    t = TempoClock.new(137/60).permanent_(true).schedAbs(0, {t.beatsPerBar_(4)});
 
-    player = Conductor(\player, t);
-    player.listen((type: \modality, device: k, key: \tr, button: \fwd));
-    player.quant_(0);
-    player.targetSection_(nil);
+    ~new_advance.();
 
     x = {
             
         Ndef(\roar_A).clear;
         Ndef(\roar_A, \roar)
-        .set(
-            \inbus, ~roar_A,
-            \drive, 6.0,
-            \toneFreq, 500.0,
-            \toneComp, 1,
-            \drywet, 1,
-            \bias, 0,
-            \filterFreq, 50,
-            \filterBP, 0,
-            \filterRes, 0.3,
-            \filterBW, 0.5,
-            \filterPre, 1.0,
-            \feedAmt, 9.0,
-            \feedFreq, 50.0,
-            \feedBW, 0.1,
-            \feedDelay, 0.1,
-            \feedGate, 0.05,
-            \gain, 6.0,
-            \amp, 1.0,
-        );
+            .set(
+                \inbus, ~roar_A,
+                \drive, 6.0,
+                \toneFreq, 500.0,
+                \toneComp, 1,
+                \drywet, 1,
+                \bias, 0,
+                \filterFreq, 50,
+                \filterBP, 0,
+                \filterRes, 0.3,
+                \filterBW, 0.5,
+                \filterPre, 1.0,
+                \feedAmt, 9.0,
+                \feedFreq, 50.0,
+                \feedBW, 0.1,
+                \feedDelay, 0.1,
+                \feedGate, 0.05,
+                \gain, 6.0,
+                \amp, 1.0,
+            );
 
         Ndef(\lfo1, { SinOsc.ar(t.tempo / \rate.kr(2), pi).linlin(-1, 1, -0.99, 0.75) });
         Ndef(\lfo2, { SinOsc.ar(t.tempo / \rate.kr(1), pi).linlin(-1, 1, 0, 1) });
@@ -76,7 +75,7 @@
         Ndef(\roar_B, \roar)
         .set(
             \inbus, ~roar_B,
-            \drive, 9.0,
+            \drive, 6.0,
             \toneFreq, 500.0,
             \toneComp, 0,
             \drywet, 1,
@@ -104,24 +103,23 @@
         Ndef(\roar_B).play(~bus2);
 
         Pdef(\reso, (
-            Pbind(\out, ~bus1, \atk, 0.01, \dec, 1, \distort, 1, \freq, 50, \inGain, -20, \gain, -6) <> 
+            Pbind(\out, ~bus1, \atk, 0.01, \dec, 1, \distort, 1, \freq, 45, \inGain, -20, \gain, 0) <> 
             Pdef(\resonator)
         )).play;
 
         Ndef(\verb, \miVerb)
         .set(
             \amp, 1,
-            \time, 0.9,
-            \timeMod, 0.4,
+            \time, 0.99,
+            \timeMod, 0,
             \hp, 0.1,
             \damp, 0.1,
             \dampMod, 1,
-            \gain, -10,
-            \inbus, ~miVerb,
+            \inbus, ~miVerb
         ).play(~bus4);
 
         //////////////////////////////////////////////////////////////////////////////////
-        player.label;
+        \a.postln;  
 
             Pdef(\p1,
                 ~makeSubdivision.(
@@ -130,21 +128,33 @@
                 )
             );
 
+            Pdef(\p2,
+                ~makeSubdivision.(
+                    PlaceAll([1, 1, 1], inf),
+                    PlaceAll([4, 4, 4, 4], inf)
+                )
+            );
+
             Pdef(\fmStringParams,
-                Pbind(
-                    \instrument, \fmString,
-                    \midiPitch, 42.midicps(),
-                    \pitchLag, 3,
+                PmonoArtic(
+                    \fmStringMono,
+                    \midiPitch, Pseq([42, 53, 66].midicps, inf),
+                    \legato, Pwrand([0.5, 1], [0.75, 0.25], inf),
+                    \globalLag, 16,
                     \atk, ~knob.(2),
-                    \rel, 1,
-                    \fb, ~knob.(5).linlin(0,1,0,-1),
+                    \rel, 0,
+                    \fb, ~knob.(5).linlin(0,1,-1,1),
                     \filter, ~knob.(3).linexp(0,1,50,5000),
                     \fuzz, ~knob.(4).linexp(0,1,0.01, 1) - 0.01,
                     \subharmonic, 2,
-                    // \exciterFilter, 3000,
+                    // \atk, 2,
+                    \dec, 0.1,
+                    \sus, 1,
+                    \rel, 0.2,
+                    \exciterFilter, 300,
                     \exciterAttack, 3000,
                     \exciterRelease, Pseq([1000, 3000, 3000], inf),
-                    \gain, -6,
+                    \gain, -12,
                     \out, [~roar_B, ~miVerb], 
                 )     
             );
@@ -152,11 +162,13 @@
             Pdef(\fmString,
                 Pdef(\fmStringParams)
                 <> ~filterBeat.(key: Pkey(\cyclecount), beat:[2], mod: 3, reject: 1)
-                <> ~filterBeat.(key: Pkey(\groupcount), beat:[1, 3], mod: 3, reject: 0)
-                <> Pdef(\p1)
+                // <> ~filterBeat.(key: Pkey(\groupcount), beat:[1, 3], mod: 3, reject: 0)
+                <> Pdef(\p2)
             ).play(t);
 
-        player.wait; player.label;
+        ~advance.wait;
+
+            \b.postln;
 
             b = Buffer.read(s, "/Users/aelazary/Projects/soundthread/outfile_2025-11-12_15-39-26.wav");
             Ndef(\sample).fadeTime = 15;
@@ -211,51 +223,53 @@
 
             Ndef(\specGrains).play(~bus3);
 
-        player.wait; player.label;
+        ~advance.wait;
+            
+            \c.postln;
 
-            Pdef(\fmString,
-                Pbind(
-                    \instrument, \fmString,
-                    \midiPitch, 42.midicps(),
-                    \pitchLag, 3,
-                    \atk, ~knob.(2),
-                    \rel, 1,
-                    \fb, -1,
-                    \filter, ~knob.(3).linexp(0,1,500,5000),
-                    \fuzz, ~knob.(4).linexp(0,1,0.01, 1) - 0.01,
-                    \subharmonic, 3,
-                    // \exciterFilter, 3000,
-                    \exciterAttack, 3000,
-                    \exciterRelease, Pseq([1000, 3000, 3000], inf),
-                    \gain, -6,
-                    \out, [~roar_B, ~miVerb], 
-                ) 
-                <> ~filterBeat.(key: Pkey(\cyclecount), beat:[2], mod: 3, reject: 1)
-                <> ~filterBeat.(key: Pkey(\groupcount), beat:[1, 3], mod: 3, reject: 0)
-                <> Pdef(\p1)
-            ).play(t);
+            // Pdef(\fmString,
+            //     Pbind(
+            //         \instrument, \fmString,
+            //         \midiPitch, 42.midicps(),
+            //         \pitchLag, 3,
+            //         \atk, ~knob.(2),
+            //         \rel, 0.2,
+            //         \fb, -1,
+            //         \filter, ~knob.(3).linexp(0,1,500,5000),
+            //         \fuzz, ~knob.(4).linexp(0,1,0.01, 1) - 0.01,
+            //         \subharmonic, 3,
+            //         // \exciterFilter, 3000,
+            //         \exciterAttack, 3000,
+            //         \exciterRelease, Pseq([1000, 3000, 3000], inf),
+            //         \gain, -6,
+            //         \out, [~roar_B, ~miVerb], 
+            //     ) 
+            //     <> ~filterBeat.(key: Pkey(\cyclecount), beat:[2], mod: 3, reject: 1)
+            //     <> ~filterBeat.(key: Pkey(\groupcount), beat:[1, 3], mod: 3, reject: 0)
+            //     <> Pdef(\p1)
+            // ).play(t);
 
             Pdef(\cut1,
                 Pbind(
                     \instrument, \segPlayer,
                     \amp, 1,
-                    \atk, 0,
+                    \atk, 0.01,
                     \rel, Pkey(\dur) * Pseq([0.5, 0.5, 1.5], inf),
-                    \buf, sample2.at(\file),
+                    \buf, sample.at(\file),
                     \rate, Pseq([2, 2, 2, 2, 2, 1], inf),
                     \oneshot, 1,
-                    \gain, 0,
+                    \gain, 32,
                     \stutterPat, Pstep(Pseq([1, 2], inf), Pseq([8, 1], inf), inf),
                     \sliceStart, Pstep(Pseq([64, 128], inf), 3, inf),
                     \stutterRange, Pstep(Pseq([32, 6], inf), 1, inf),
-                    \slice, ~pGetSlice.((Pseries(1, Pkey(\stutterRange), inf) + Pkey(\sliceStart)), sample2).stutter(Pkey(\stutterPat)),
+                    \slice, ~pGetSlice.((Pseries(1, Pkey(\stutterRange), inf) + Pkey(\sliceStart)), sample).stutter(Pkey(\stutterPat)),
                     \pitchMix, 0.5,
                     \pitchRatio, 1,
                     \windowSize, 0.01,
                     \pitchDispersion, 0.01,
                     \timeDispersion, 0.5,
                     \pan, 0.25,
-                    \out, [~roar_A, ~resonator,  ~miVerb]
+                    \out, [~bus1, ~resonator]
                 )
             );
 
@@ -265,7 +279,9 @@
                 Pdef(\p1)
             ).play(t);
 
-        player.wait; player.label;
+        ~advance.wait;
+
+        \d.postln;
             
             Pdef(\cut1,
                 Pbind(
@@ -275,16 +291,16 @@
                     \atk, 0,
                     // \rel, Pkey(\dur) * 0.5,
                     \rel, Pkey(\dur) * Pseq([0.5, 0.5, 1.5], inf),
-                    \buf, sample2.at(\file),
+                    \buf, sample.at(\file),
                     \rate, Pseq([2, 2, 2, 2, 2, 1], inf),
                     \oneshot, 1,
-                    \gain, 6,
+                    \gain, 12,
                     \stutterPat, Pstep(Pseq([1, 2], inf), Pseq([8, 1], inf), inf),
                     \sliceStart, Pstep(Pseq([64, 128], inf), 3, inf),
                     // \stutterPat, 1,
                     \stutterRange, Pstep(Pseq([32, 6], inf), 1, inf),
                     // \stutterRange, 32,
-                    \slice, ~pGetSlice.((Pseries(1, Pkey(\stutterRange), inf) + Pkey(\sliceStart)), sample2).stutter(Pkey(\stutterPat)),
+                    \slice, ~pGetSlice.((Pseries(1, Pkey(\stutterRange), inf) + Pkey(\sliceStart)), sample).stutter(Pkey(\stutterPat)),
                     // \slice, ~pGetSlice.((Pseries(1, 32, inf) + Pkey(\sliceStart)), sample),
                     \pitchMix, 0.5,
                     \pitchRatio, 1,
@@ -292,7 +308,7 @@
                     \pitchDispersion, 0.01,
                     \timeDispersion, 0.5,
                     \pan, 0,
-                    \out, [~roar_A, ~resonator, ~miVerb]
+                    \out, [~bus1, ~resonator]
                 )
             );
 
@@ -309,8 +325,9 @@
                 Pdef(\p1)
             ).play(t);
             
-        player.wait; player.label;
+        ~advance.wait;
 
+            \e.postln;
             Pdef(\perc).stop;
 
             Pdef(\fmStringParams,
@@ -319,7 +336,7 @@
                     \midiPitch, 42.midicps(),
                     \pitchLag, 3,
                     \atk, ~knob.(2),
-                    \rel, 1,
+                    \rel, 0.2,
                     \fb, ~knob.(5).linlin(0,1,0,-1),
                     \filter, ~knob.(3).linexp(0,1,50,5000),
                     \fuzz, ~knob.(4).linexp(0,1,0.01, 1) - 0.01,
@@ -332,13 +349,46 @@
                 )     
             );
 
+            // Pdef(\fmString,
+            //     Pdef(\fmStringParams)
+            //     // <> ~filterBeat.(key: Pkey(\cyclecount), beat:[2], mod: 3, reject: 1)
+            //     <> Pdef(\p1)
+            // ).play(t);
+
+            Pdef(\fmStringParams,
+                PmonoArtic(
+                    \fmStringMono,
+                    \midiPitch, Pseq([42, 53].midicps, inf),
+                    \legato, Pwrand([0.5, 1], [0.75, 0.25], inf),
+                    \globalLag, 16,
+                    \atk, ~knob.(2),
+                    \rel, 0,
+                    \fb, ~knob.(5).linlin(0,1,0,-1),
+                    \filter, ~knob.(3).linexp(0,1,50,5000),
+                    \fuzz, ~knob.(4).linexp(0,1,0.01, 1) - 0.01,
+                    \subharmonic, 2,
+                    // \atk, 2,
+                    \dec, 0.1,
+                    \sus, 1,
+                    \rel, 0.2,
+                    // \exciterFilter, 300,
+                    \exciterAttack, 3000,
+                    \exciterRelease, Pseq([1000, 3000, 3000], inf),
+                    \gain, -6,
+                    \out, [~roar_B, ~miVerb], 
+                )     
+            );
+
             Pdef(\fmString,
                 Pdef(\fmStringParams)
-                // <> ~filterBeat.(key: Pkey(\cyclecount), beat:[2], mod: 3, reject: 1)
-                <> Pdef(\p1)
+                <> ~filterBeat.(key: Pkey(\cyclecount), beat:[2], mod: 3, reject: 1)
+                // <> ~filterBeat.(key: Pkey(\groupcount), beat:[1, 3], mod: 3, reject: 0)
+                <> Pdef(\p2)
             ).play(t);
 
-        player.wait; player.label;
+        ~advance.wait;
+
+            \f.postln;
 
             Pdef(\pad,
                 Pmono(\fftStretch_magAbove_mono,
@@ -388,17 +438,19 @@
                     \pitchDispersion, 0.01,
                     \timeDispersion, 0.5,
                     \pan, 0.25,
-                    \out, [~roar_A, ~resonator, ~miVerb]
+                    \out, [~bus1, ~resonator]
                 )
             );
 
             Pdef(\perc, 
                 Pdef(\cut1) <>
-                ~filterBeat.(key: Pkey(\cyclecount), beat:[2, 4], mod: 7, reject: 1) <>
+                ~filterBeat.(key: Pkey(\cyclecount), beat:[2, 4], mod: 5, reject: 1) <>
                 Pdef(\p1)
             ).play(t);
 
-        player.wait; player.label;
+        ~advance.wait;
+        
+            \g.postln;
 
             Pdef(\kickParams,
                 Pbind(
@@ -464,7 +516,9 @@
                 Pdef(\p1)
             ).play(t);
 
-        player.wait; player.label;
+        ~advance.wait;
+
+            \h.postln;
 
             Pdef(\fmString_hat,
                 Pbind(
@@ -489,7 +543,9 @@
                 <> Pdef(\p2)
             ).play(t);
 
-        player.wait; player.label;
+        ~advance.wait;
+
+            \i.postln;
 
             Pdef(\fmString_high,
                 Pbind(
@@ -527,7 +583,9 @@
                 Pdef(\p1)
             ).play(t);
 
-        player.wait; player.label;
+        ~advance.wait;
+
+            \j.postln;
 
             Pdef(\fmStringParams,
                 Pbind(
@@ -623,7 +681,9 @@
                 <> Pdef(\p1)
             ).play(t);
 
-        player.wait; player.label;
+        ~advance.wait;
+
+            \k.postln;
 
             Pdef(\fmString_high,
                 Pbind(
@@ -663,7 +723,7 @@
             Pdef(\perc).stop;
             Pdef(\cut2).stop;
 
-        player.wait; player.label;
+        ~advance.wait;
 
             // Ndef(\roar_A).set(\toneComp, 0);
             // Ndef(\roar_B).set(\toneComp, 0);
@@ -738,7 +798,7 @@
                 <> Pdef(\p1)
             ).play(t);
 
-        player.wait; player.label;
+        ~advance.wait;
 
             Pdef(\fmString_high2,
                 Pbind(
@@ -763,7 +823,7 @@
                 <> Pdef(\p1)
             ).play(t);
 
-        player.wait; player.label;
+        ~advance.wait;
 
             Pdef(\fmString_high2,
                 Pbind(
@@ -788,7 +848,7 @@
                 <> Pdef(\p1)
             ).play(t);
 
-        player.wait; player.label;
+        ~advance.wait;
 
             Pdef(\fmString_high2,
                 Pbind(
@@ -836,7 +896,7 @@
                 <> Pdef(\p1)
             ).play(t);
 
-        player.wait; player.label(\end);
+        ~advance.wait;
 
             Pdef(\fmString_high).stop;
 
@@ -870,5 +930,8 @@
     Pdef(\fmString_high2).stop;
     Ndef(\sample).stop(fadeTime: 10);
     Ndef(\miVerb).stop(fadeTime: 10);
-    Ndef(\specGrains, \spectralGrains1).stop;
 )
+
+Prout
+
+Task

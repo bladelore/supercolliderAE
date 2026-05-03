@@ -155,7 +155,7 @@ SynthDef(\echo,{|out=0, size = 0.5, offset = 0.012|
 	sig = LPF.ar(sig, \lpf.kr(5000));
 	sig = sig.tanh;
 
-	LocalOut.ar(DelayC.ar(sig, 1, LFNoise2.ar(12).range([size,size+offset],[size+offset,size])).reverse);
+	LocalOut.ar(DelayC.ar(sig, 1, LFNoise2.ar(\modSpeed.kr(12)).range([size,size+offset],[size+offset,size])).reverse);
 
 	sig = SelectX.ar(\mix.kr(1), [input, sig]);
 	sig = sig * \gain.kr(0).dbamp;
